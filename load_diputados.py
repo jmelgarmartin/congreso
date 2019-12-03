@@ -1,24 +1,19 @@
 import re
-from py2neo import Graph
+import neo4j_connector as nc
 
 
 def load_diputados(diputados):
     neo4j_user = 'neo4j'
     neo4j_pass = 'congreso'
-    graph = Graph(secure=True, auth=(neo4j_user, neo4j_pass))
+    graph = nc.generate_graph(neo4j_user, neo4j_pass)
     graph.delete_all()
     graph.run('CREATE CONSTRAINT ON (d:Diputado) ASSERT d.apellidos IS UNIQUE')
     for diputado in diputados:
-        query = 'MERGE (d:Diputado {apellidos: "' + diputado['apellidos'].strip() + '"}) '
-        query = query + 'ON CREATE SET d.nombre = "' + diputado['nombre'].strip() + '" , '
-        query = query + 'd.apellidos = "' + diputado['apellidos'].strip() + '" , '
-        query = query + 'd.grupo = "' + diputado['grupo'].strip() + '" RETURN d'
-        graph.run(query)
+        graph.run(nc.insert_diputado(diputado))
 
 
 def main():
     f_diputados = open('diputados.txt', 'r').readlines()
-    grupos = []
     groups_names = {
         '(GCUP-EC-GC)': 'Grupo Podemos',
         '(GV (EAJ-PNV))': 'Grupo Vasco',

@@ -45,8 +45,8 @@ def remove_headers(page):
 
 def clean_text(text, cod_docu):
     return text.replace(cod_docu, '').replace('.', ' ').replace(',', ' ') \
-        .replace('presidente del gobierno en funciones', 'sánchez pérez-castejón').replace('š', ' ')\
-        .replace('–', ' ')\
+        .replace('presidente del gobierno en funciones', 'sánchez pérez-castejón').replace('š', ' ') \
+        .replace('–', ' ') \
         .replace('  ', ' ')
 
 
@@ -91,6 +91,15 @@ def split_text(text):
     return output
 
 
+def clean_parenthesis(text):
+    regex = r"[(].*[)]"
+    matches = re.finditer(regex, text)
+    output = text
+    for matchNum, match in enumerate(matches, start=1):
+        output = output.replace(match.group(), '')
+    return output
+
+
 def main():
     #   PDF = obtain_PDF()
     file_name = 'download.pdf'
@@ -111,19 +120,21 @@ def main():
             ini = remove_headers(text)
             ini = ini + text[ini:].find(frase_inicial) + len(frase_inicial)
             document = document + clean_text(text[ini:], codigo_documento) + ' '
-            if ix > pagina_inicial + 1:
+            if ix > pagina_inicial + 7:
                 break
     dialogs = []
     for element in split_text(document):
         if element['pos_dialog_end'] == 0:
-            dialogs.append((document[element['pos_ini']: element['pos_fin']],
-                            document[element['pos_fin'] + 1:]))
+            dialogs.append([document[element['pos_ini']: element['pos_fin']],
+                            document[element['pos_fin'] + 1:]])
         else:
-            dialogs.append((document[element['pos_ini']: element['pos_fin']],
-                            document[element['pos_fin'] + 1: element['pos_dialog_end']]))
+            dialogs.append([document[element['pos_ini']: element['pos_fin']],
+                            document[element['pos_fin'] + 1: element['pos_dialog_end']]])
     print('@##########')
-    for dialog in dialogs:
-        print(dialog)
+    for ix, dialog in enumerate(dialogs):
+        dialogs[ix][0] = clean_parenthesis(dialog[0])
+        dialogs[ix][1] = clean_parenthesis(dialog[1])
+        print(dialogs[ix])
 
 
 #    os.remove(file_name)

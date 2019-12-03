@@ -3,11 +3,10 @@ import neo4j_connector as nc
 
 
 def load_diputados(diputados):
-    neo4j_user = 'neo4j'
-    neo4j_pass = 'congreso'
-    graph = nc.generate_graph(neo4j_user, neo4j_pass)
+    graph = nc.generate_graph()
     graph.delete_all()
     graph.run('CREATE CONSTRAINT ON (d:Diputado) ASSERT d.apellidos IS UNIQUE')
+    graph.run('CREATE CONSTRAINT ON p:Palabra) ASSERT p.palabra IS UNIQUE')
     for diputado in diputados:
         graph.run(nc.insert_diputado(diputado))
 

@@ -1,35 +1,14 @@
-import requests
-from bs4 import BeautifulSoup
 import PyPDF2
 import re
 import neo4j_connector as nc
-import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
 # variables generales para la configuracion del proceso
-presidencia = 'presidenta:'
+presidencia = ' presidenta'
 pagina_inicial = 5
 frase_inicial = 'del grupo parlamentario popular.'
 codigo_documento = 'cve: dscd-13-pl-12'
-
-
-def obtain_PDF():
-    url_congreso = 'http://www.congreso.es/portal/page/portal/Congreso/Congreso/Publicaciones/DiaSes/Pleno'
-
-    response = requests.get(url_congreso)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    divs = soup.findAll('div', attrs={'class': 'listado_1'})
-
-    link = ''
-    for div in divs:
-        lis = div.findAll('li')
-        for li in lis:
-            print(li)
-            if li.find('a'):
-                link = li.find('a', href=True)['href']
-
-    return requests.get(link).content
 
 
 def remove_headers(page):
@@ -54,7 +33,12 @@ def remove_headers(page):
 
 def clean_text(text, cod_docu):
     return text.replace(cod_docu, '').replace('.', ' ').replace(',', ' ') \
-        .replace('presidente del gobierno en funciones', 'sánchez pérez-castejón').replace('š', ' ') \
+        .replace('presidente del gobierno en funciones', 'sánchez pérez-castejón') \
+        .replace('ministra de justicia en funciones', 'delgado garcía') \
+        .replace('ministra de hacienda en funciones', 'montero cuadrado') \
+        .replace('ministro del interior en funciones', 'grande-marlaska gómez') \
+        .replace('rodrí guez hernández', 'rodríguez hernández') \
+        .replace('š', ' ') \
         .replace('–', ' ').replace(' : ', ': ').replace('momento:', 'momento') \
         .replace('cataluña:', 'cataluña').replace('sorprender:', 'sorprender') \
         .replace('?', '').replace('¿', '') \
@@ -89,9 +73,11 @@ def split_text(text):
     output = []
     regex1 = r"el señor .{1,90}[:]|la señora .{1,90}[:]"
     regex2 = r"el señor |la señora "
+    regex3 = r"señor |señora "
     lista_ponentes = find_ponentes(text, regex1)
     for ix, ponente in enumerate(lista_ponentes):
         ponente = adjust_ponentes(ponente, regex2)
+        ponente = adjust_ponentes(ponente, regex3)
         output.append(ponente)
     pos_ini_ant = 0
     for ix, pon in enumerate(reversed(output)):
@@ -112,7 +98,7 @@ def clean_parenthesis(text):
 
 
 def clean_mr_mrs(text):
-    return text.replace('el señor ', '').replace('la señora ', '')
+    return text.replace('el señor ', '').replace('la señora ', '').replace('señor ', '').replace('señora ', '')
 
 
 def generate_dialogs(document):
@@ -129,7 +115,7 @@ def generate_dialogs(document):
         dialogs[ix][1] = clean_mr_mrs(clean_parenthesis(dialog[1]))
     output = []
     for dialog in dialogs:
-        if dialog[0] != presidencia:
+        if dialog[0].find(presidencia) > 0:
             output.append(dialog)
     return output
 
@@ -143,13 +129,22 @@ def clean_dialogs(dialogs):
         filtered_sentence = [w for w in word_tokens if not w in stop_words]
         filtered_sentence = [w for w in filtered_sentence if not w in list_specific_stop_words]
         dialogs[ix][1] = ' '.join(filtered_sentence)
+        dialogs[ix][0] = dialog[0][:-1]
     return dialogs
 
 
+def cargar_dialogos(dialogs):
+    graph = nc.generate_graph()
+    matcher = nc.generate_nodeMatcher(graph)
+    for dialog in dialogs:
+        diputado = nc.return_diputado(matcher, dialog[0])
+        if diputado == None:
+            print(dialog[0])
+            print(dialog[1])
+
+
 def main():
-    #   PDF = obtain_PDF()
     file_name = 'download.pdf'
-    #   open(file_name, 'wb').write(PDF)
     pdfFileObj = open(file_name, 'rb')
     pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
 
@@ -166,13 +161,8 @@ def main():
     dialogs = generate_dialogs(document)
     dialogs = clean_dialogs(dialogs)
 
-    intervinientes = []
-    for dialog in dialogs:
-        intervinientes.append(dialog[0][:-1])
+    cargar_dialogos(dialogs)
 
-    unicos_int = list(set(intervinientes))
-    for x in unicos_int:
-        print(x)
 
 #    os.remove(file_name)
 

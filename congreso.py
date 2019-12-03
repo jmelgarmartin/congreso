@@ -4,6 +4,12 @@ import os
 import PyPDF2
 import re
 
+# variables generales para la configuracion del proceso
+presidencia = 'presidenta:'
+pagina_inicial = 5
+frase_inicial = 'del grupo parlamentario popular.'
+codigo_documento = 'cve: dscd-13-pl-12'
+
 
 def obtain_PDF():
     url_congreso = 'http://www.congreso.es/portal/page/portal/Congreso/Congreso/Publicaciones/DiaSes/Pleno'
@@ -46,7 +52,7 @@ def remove_headers(page):
 def clean_text(text, cod_docu):
     return text.replace(cod_docu, '').replace('.', ' ').replace(',', ' ') \
         .replace('presidente del gobierno en funciones', 'sánchez pérez-castejón').replace('š', ' ') \
-        .replace('–', ' ') \
+        .replace('–', ' ').replace(' : ', ': ').replace('momento:', 'momento') \
         .replace('  ', ' ')
 
 
@@ -92,11 +98,34 @@ def split_text(text):
 
 
 def clean_parenthesis(text):
-    regex = r"[(].*[)]"
+    regex = r" [(].*[)]"
     matches = re.finditer(regex, text)
     output = text
     for matchNum, match in enumerate(matches, start=1):
         output = output.replace(match.group(), '')
+    return output
+
+
+def clean_mr_mrs(text):
+    return text.replace('el señor ', '').replace('la señora ', '')
+
+
+def generate_dialogs(document):
+    dialogs = []
+    for element in split_text(document):
+        if element['pos_dialog_end'] == 0:
+            dialogs.append([document[element['pos_ini']: element['pos_fin']],
+                            document[element['pos_fin'] + 1:]])
+        else:
+            dialogs.append([document[element['pos_ini']: element['pos_fin']],
+                            document[element['pos_fin'] + 1: element['pos_dialog_end']]])
+    for ix, dialog in enumerate(dialogs):
+        dialogs[ix][0] = clean_mr_mrs(clean_parenthesis(dialog[0]))
+        dialogs[ix][1] = clean_mr_mrs(clean_parenthesis(dialog[1]))
+    output = []
+    for dialog in dialogs:
+        if dialog[0] != presidencia:
+            output.append(dialog)
     return output
 
 
@@ -106,10 +135,6 @@ def main():
     #   open(file_name, 'wb').write(PDF)
     pdfFileObj = open(file_name, 'rb')
     pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
-    # PARAMETROS
-    pagina_inicial = 5
-    frase_inicial = 'del grupo parlamentario popular.'
-    codigo_documento = 'cve: dscd-13-pl-12'
 
     document = ''
     ix = 0
@@ -120,21 +145,11 @@ def main():
             ini = remove_headers(text)
             ini = ini + text[ini:].find(frase_inicial) + len(frase_inicial)
             document = document + clean_text(text[ini:], codigo_documento) + ' '
-            if ix > pagina_inicial + 7:
-                break
-    dialogs = []
-    for element in split_text(document):
-        if element['pos_dialog_end'] == 0:
-            dialogs.append([document[element['pos_ini']: element['pos_fin']],
-                            document[element['pos_fin'] + 1:]])
-        else:
-            dialogs.append([document[element['pos_ini']: element['pos_fin']],
-                            document[element['pos_fin'] + 1: element['pos_dialog_end']]])
-    print('@##########')
-    for ix, dialog in enumerate(dialogs):
-        dialogs[ix][0] = clean_parenthesis(dialog[0])
-        dialogs[ix][1] = clean_parenthesis(dialog[1])
-        print(dialogs[ix])
+
+    dialogs = generate_dialogs(document)
+
+    for dialog in dialogs:
+        print(dialog)
 
 
 #    os.remove(file_name)

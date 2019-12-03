@@ -2,6 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 import PyPDF2
 import re
+import neo4j_connector as nc
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 
 # variables generales para la configuracion del proceso
 presidencia = 'presidenta:'
@@ -52,6 +56,8 @@ def clean_text(text, cod_docu):
     return text.replace(cod_docu, '').replace('.', ' ').replace(',', ' ') \
         .replace('presidente del gobierno en funciones', 'sánchez pérez-castejón').replace('š', ' ') \
         .replace('–', ' ').replace(' : ', ': ').replace('momento:', 'momento') \
+        .replace('cataluña:', 'cataluña').replace('sorprender:', 'sorprender') \
+        .replace('?', '').replace('¿', '') \
         .replace('  ', ' ')
 
 
@@ -128,6 +134,18 @@ def generate_dialogs(document):
     return output
 
 
+def clean_dialogs(dialogs):
+    list_specific_stop_words = ['gracias', 'señor', 'señora', 'señorias']
+    stop_words = set(stopwords.words('spanish'))
+
+    for ix, dialog in enumerate(dialogs):
+        word_tokens = word_tokenize(dialog[1])
+        filtered_sentence = [w for w in word_tokens if not w in stop_words]
+        filtered_sentence = [w for w in filtered_sentence if not w in list_specific_stop_words]
+        dialogs[ix][1] = ' '.join(filtered_sentence)
+    return dialogs
+
+
 def main():
     #   PDF = obtain_PDF()
     file_name = 'download.pdf'
@@ -146,10 +164,15 @@ def main():
             document = document + clean_text(text[ini:], codigo_documento) + ' '
 
     dialogs = generate_dialogs(document)
+    dialogs = clean_dialogs(dialogs)
 
+    intervinientes = []
     for dialog in dialogs:
-        print(dialog)
+        intervinientes.append(dialog[0][:-1])
 
+    unicos_int = list(set(intervinientes))
+    for x in unicos_int:
+        print(x)
 
 #    os.remove(file_name)
 

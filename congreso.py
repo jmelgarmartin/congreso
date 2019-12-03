@@ -5,7 +5,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
 # variables generales para la configuracion del proceso
-presidencia = ' presidenta'
+presidencia = 'presidenta'
 pagina_inicial = 5
 frase_inicial = 'del grupo parlamentario popular.'
 codigo_documento = 'cve: dscd-13-pl-12'
@@ -38,6 +38,8 @@ def clean_text(text, cod_docu):
         .replace('ministra de hacienda en funciones', 'montero cuadrado') \
         .replace('ministro del interior en funciones', 'grande-marlaska gómez') \
         .replace('rodrí guez hernández', 'rodríguez hernández') \
+        .replace('ministro de agricultura pesca y alimentación en funciones', 'planas puchades') \
+        .replace('ministra de economía y empresa en funciones', 'planas puchades') \
         .replace('š', ' ') \
         .replace('–', ' ').replace(' : ', ': ').replace('momento:', 'momento') \
         .replace('cataluña:', 'cataluña').replace('sorprender:', 'sorprender') \
@@ -77,7 +79,7 @@ def split_text(text):
     lista_ponentes = find_ponentes(text, regex1)
     for ix, ponente in enumerate(lista_ponentes):
         ponente = adjust_ponentes(ponente, regex2)
-        ponente = adjust_ponentes(ponente, regex3)
+ #       ponente = adjust_ponentes(ponente, regex3)
         output.append(ponente)
     pos_ini_ant = 0
     for ix, pon in enumerate(reversed(output)):
@@ -115,7 +117,7 @@ def generate_dialogs(document):
         dialogs[ix][1] = clean_mr_mrs(clean_parenthesis(dialog[1]))
     output = []
     for dialog in dialogs:
-        if dialog[0].find(presidencia) > 0:
+        if dialog[0].find(presidencia) == -1:
             output.append(dialog)
     return output
 
@@ -140,7 +142,7 @@ def cargar_dialogos(dialogs):
         diputado = nc.return_diputado(matcher, dialog[0])
         if diputado == None:
             print(dialog[0])
-            print(dialog[1])
+
 
 
 def main():

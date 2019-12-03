@@ -21,7 +21,8 @@ def main():
         '(GVOX)': 'Grupo Vox',
         '(GMx)': 'Grupo Mixto',
         '(GS)': 'Grupo Socialista',
-        '(GP)': 'Grupo Popular'
+        '(GP)': 'Grupo Popular',
+        '(IND)': 'Independiente'
     }
     diputados = []
     for line in f_diputados:

@@ -1,0 +1,7 @@
+ACTUALIZAR NUMERO DE VECES QUE SE DICE UNA PALABRA
+
+MATCH (:Diputado)-[r]->(p:Palabra)
+WITH p.palabra as pal, count(r) as veces
+MATCH (pala:Palabra)
+WHERE pala.palabra = pal
+SET pala.veces = veces

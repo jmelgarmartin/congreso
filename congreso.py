@@ -33,13 +33,6 @@ def remove_headers(page):
 
 def clean_text(text, cod_docu):
     return text.replace(cod_docu, '').replace('.', ' ').replace(',', ' ') \
-        .replace('presidente del gobierno en funciones', 'sánchez pérez-castejón') \
-        .replace('ministra de justicia en funciones', 'delgado garcía') \
-        .replace('ministra de hacienda en funciones', 'montero cuadrado') \
-        .replace('ministro del interior en funciones', 'grande-marlaska gómez') \
-        .replace('rodrí guez hernández', 'rodríguez hernández') \
-        .replace('ministro de agricultura pesca y alimentación en funciones', 'planas puchades') \
-        .replace('ministra de economía y empresa en funciones', 'planas puchades') \
         .replace('š', ' ') \
         .replace('–', ' ').replace(' : ', ': ').replace('momento:', 'momento') \
         .replace('cataluña:', 'cataluña').replace('sorprender:', 'sorprender') \
@@ -79,7 +72,7 @@ def split_text(text):
     lista_ponentes = find_ponentes(text, regex1)
     for ix, ponente in enumerate(lista_ponentes):
         ponente = adjust_ponentes(ponente, regex2)
- #       ponente = adjust_ponentes(ponente, regex3)
+        #       ponente = adjust_ponentes(ponente, regex3)
         output.append(ponente)
     pos_ini_ant = 0
     for ix, pon in enumerate(reversed(output)):
@@ -122,6 +115,17 @@ def generate_dialogs(document):
     return output
 
 
+def clean_names(name):
+    return name.replace('presidente del gobierno en funciones', 'sánchez pérez-castejón') \
+        .replace('ministra de justicia en funciones', 'delgado garcía') \
+        .replace('ministra de hacienda en funciones', 'montero cuadrado') \
+        .replace('ministro del interior en funciones', 'grande-marlaska gómez') \
+        .replace('rodrí guez hernández', 'rodríguez hernández') \
+        .replace('ministro de agricultura pesca y alimentación en funciones', 'planas puchades') \
+        .replace('ministro de fomento en funciones', 'ábalos meco') \
+        .replace('ministra de economía y empresa en funciones', 'calviño santamaría')
+
+
 def clean_dialogs(dialogs):
     list_specific_stop_words = ['gracias', 'señor', 'señora', 'señorias']
     stop_words = set(stopwords.words('spanish'))
@@ -131,7 +135,7 @@ def clean_dialogs(dialogs):
         filtered_sentence = [w for w in word_tokens if not w in stop_words]
         filtered_sentence = [w for w in filtered_sentence if not w in list_specific_stop_words]
         dialogs[ix][1] = ' '.join(filtered_sentence)
-        dialogs[ix][0] = dialog[0][:-1]
+        dialogs[ix][0] = clean_names(dialog[0][:-1])
     return dialogs
 
 
@@ -142,7 +146,6 @@ def cargar_dialogos(dialogs):
         diputado = nc.return_diputado(matcher, dialog[0])
         if diputado == None:
             print(dialog[0])
-
 
 
 def main():

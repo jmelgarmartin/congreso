@@ -3,7 +3,8 @@ from py2neo import Graph, NodeMatcher
 
 def generate_graph():
     neo4j_user = 'neo4j'
-    neo4j_pass = 'congreso'
+#    neo4j_pass = 'congreso'
+    neo4j_pass = 'capgemini'
     return Graph(secure=True, auth=(neo4j_user, neo4j_pass))
 
 

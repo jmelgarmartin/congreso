@@ -6,13 +6,13 @@ def load_diputados(diputados):
     graph = nc.generate_graph()
     graph.delete_all()
     graph.run('CREATE CONSTRAINT ON (d:Diputado) ASSERT d.apellidos IS UNIQUE')
-    graph.run('CREATE CONSTRAINT ON p:Palabra) ASSERT p.palabra IS UNIQUE')
+    graph.run('CREATE CONSTRAINT ON (p:Palabra) ASSERT p.palabra IS UNIQUE')
     for diputado in diputados:
         graph.run(nc.insert_diputado(diputado))
 
 
 def main():
-    f_diputados = open('diputados.txt', 'r').readlines()
+    f_diputados = open('diputados.txt', 'r', encoding="utf8").readlines()
     groups_names = {
         '(GCUP-EC-GC)': 'Grupo Podemos',
         '(GV (EAJ-PNV))': 'Grupo Vasco',

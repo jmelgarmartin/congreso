@@ -42,11 +42,13 @@ def remove_headers(page):
 
 
 def clean_text(text, cod_docu):
+    #arreglos especiales...... ye vere si puedo corregirlos mejor
     return text.replace(cod_docu, '').replace('.', ' ').replace(',', ' ') \
         .replace('š', ' ').replace(';', ' ').replace('!', ' ').replace('¡', ' ') \
         .replace('–', ' ').replace(' : ', ': ').replace('momento:', 'momento') \
         .replace('rodrí guez', 'rodríguez').replace('catalunya', 'cataluña') \
         .replace('cataluña:', 'cataluña').replace('sorprender:', 'sorprender') \
+        .replace(' de:', ' de').replace('también:', 'también') \
         .replace('?', '').replace('¿', '') \
         .replace('  ', ' ')
 
@@ -169,7 +171,7 @@ def cargar_dialogos(dialogs):
     matcher = nc.generate_nodeMatcher(graph)
     for dialog in dialogs:
         diputado = nc.return_diputado(matcher, dialog[0])
-        if diputado == None:
+        if diputado is None:
             print("PERSONA NO ENCONTRADA: ")
             print(dialog[0])
             print(dialog[1])
@@ -211,9 +213,10 @@ def main():
                 regex = r"[ ][A-Za-z]+[:]"
                 matches = re.finditer(regex, document)
                 for matchNum, match in enumerate(matches, start=1):
-                    diputado = nc.busca_diputado(matcher, match.group()[1:-1])
-                    if diputado == None:
-                        document = document.replace(match.group(), match.group()[1:-1])
+                    if match.group() != ' ' + presidencia + ':':
+                        diputado = nc.busca_diputado(matcher, match.group()[1:-1])
+                        if diputado is None:
+                            document = document.replace(match.group(), match.group()[1:-1])
 
         dialogs = generate_dialogs(document)
         dialogs = clean_dialogs(dialogs)
@@ -223,3 +226,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    print('FIN PROCESO')

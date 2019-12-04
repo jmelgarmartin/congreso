@@ -213,7 +213,7 @@ def main():
                 for matchNum, match in enumerate(matches, start=1):
                     diputado = nc.busca_diputado(matcher, match.group()[1:-1])
                     if diputado == None:
-                        document.replace(match.group(), match.group()[1:-1])
+                        document = document.replace(match.group(), match.group()[1:-1])
 
         dialogs = generate_dialogs(document)
         dialogs = clean_dialogs(dialogs)

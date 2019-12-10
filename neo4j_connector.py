@@ -60,3 +60,5 @@ def return_palabra(matcher, palabra):
 
 def insert_relation(diputado, palabra):
     return Relationship(diputado, 'DICE', palabra)
+
+

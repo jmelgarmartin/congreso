@@ -192,6 +192,8 @@ def cargar_dialogos(dialogs):
                 graph.create(nc.insert_relation(diputado, palabra))
     graph.run(nc.palabras_dichas())
 
+    return graph
+
 
 def main():
     params = {'doc_0.pdf': {'pagina_inicial': 5,

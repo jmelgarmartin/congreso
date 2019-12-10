@@ -5,3 +5,14 @@ WITH p.palabra as pal, count(r) as veces
 MATCH (pala:Palabra)
 WHERE pala.palabra = pal
 SET pala.veces = veces
+
+AÑADIR NUEVOS LABELS A UN NODO
+
+MATCH (d:Diputado)
+WITH d, d.grupo as group
+CALL apoc.create.addLabels(d, [group]) YIELD node
+RETURN count(d) as count
+
+
+
+PARTIDOS QUE DICEN UNA PALABRA

@@ -9,6 +9,7 @@ def load_diputados(diputados):
     graph.run('CREATE CONSTRAINT ON (p:Palabra) ASSERT p.palabra IS UNIQUE')
     for diputado in diputados:
         graph.run(nc.insert_diputado(diputado))
+    graph.run(nc.asignar_partidos())
 
 
 def main():

@@ -16,6 +16,26 @@ def insert_diputado(diputado):
     return query
 
 
+def asignar_partidos():
+    # AÑADIR NUEVOS LABELS A UN NODO
+    # AÑADIMOS COMO TIPO DE NODO EL PARTIDO A CADA DIPUTADO
+    query = 'MATCH (d:Diputado) '
+    query = query + 'WITH d, d.grupo as group '
+    query = query + 'CALL apoc.create.addLabels(d, [group]) YIELD node '
+    query = query + 'RETURN count(d) as count'
+    return query
+
+
+def palabras_dichas():
+    # ACTUALIZAR NUMERO DE VECES QUE SE DICE UNA PALABRA
+    query = 'MATCH (:Diputado)-[r]->(p:Palabra) '
+    query = query + 'WITH p.palabra as pal, count(r) as veces '
+    query = query + 'MATCH (pala:Palabra) '
+    query = query + 'WHERE pala.palabra = pal '
+    query = query + 'SET pala.veces = veces '
+    return query
+
+
 def insert_palabra(palabra):
     query = 'MERGE (p:Palabra {palabra: "' + palabra.strip() + '"}) '
     query = query + 'ON CREATE SET p.palabra = "' + palabra.strip() + '" RETURN p'
@@ -25,8 +45,10 @@ def insert_palabra(palabra):
 def generate_nodeMatcher(graph):
     return NodeMatcher(graph)
 
+
 def busca_diputado(matcher, word):
     return matcher.match("Diputado", apellidos__contains=word).first()
+
 
 def return_diputado(matcher, apellidos):
     return matcher.match("Diputado", apellidos=apellidos).first()

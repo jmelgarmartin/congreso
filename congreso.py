@@ -1,15 +1,18 @@
-import PyPDF2
 import re
-import neo4j_connector as nc
+
+import PyPDF2
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 from nltk.tag import StanfordPOSTagger
+from nltk.tokenize import word_tokenize
+import spacy
+
+import neo4j_connector as nc
 
 # variables generales para la configuracion del proceso
 presidencia = 'presidenta'
-pagina_inicial = 5
-frase_inicial = '(Prolongados aplausos del Grupo Parlamentario Socialista).'
-codigo_documento = 'cve: dscd-13-pl-2'
+pagina_inicial = 0
+frase_inicial = ''
+codigo_documento = ''
 
 
 def obtain_documents(params):
@@ -42,7 +45,7 @@ def remove_headers(page):
 
 
 def clean_text(text, cod_docu):
-    #arreglos especiales...... ye vere si puedo corregirlos mejor
+    # arreglos especiales...... ye vere si puedo corregirlos mejor
     return text.replace(cod_docu, '').replace('.', ' ').replace(',', ' ') \
         .replace('š', ' ').replace(';', ' ').replace('!', ' ').replace('¡', ' ') \
         .replace('–', ' ').replace(' : ', ': ').replace('momento:', 'momento') \
@@ -157,12 +160,18 @@ def clean_dialogs(dialogs):
 def dialog_tagger(dialog):
     jar = 'nlp/stanford-postagger.jar'
     model = 'nlp/spanish.tagger'
+    # para descargar el modelo ejecutar como admin:
+    # python -m spacy download es_core_news_md
+    nlp = spacy.load('es_core_news_md')
     pos_tagger = StanfordPOSTagger(model, jar, encoding='utf8')
     words = pos_tagger.tag([dialog])
     output = []
     for word in words:
         if word[1][0:2] in ['nc', 'np', 'aq']:
             output.append(word[0])
+        else:
+            if word[1][0:1] == 'v':
+                output.append(nlp(word[0])[0].lemma_)
     return output
 
 
@@ -170,6 +179,7 @@ def cargar_dialogos(dialogs):
     graph = nc.generate_graph()
     matcher = nc.generate_nodeMatcher(graph)
     for dialog in dialogs:
+        print('CARGAR DIALOGOS')
         diputado = nc.return_diputado(matcher, dialog[0])
         if diputado is None:
             print("PERSONA NO ENCONTRADA: ")
@@ -180,6 +190,7 @@ def cargar_dialogos(dialogs):
                 graph.run(nc.insert_palabra(word))
                 palabra = nc.return_palabra(matcher, word)
                 graph.create(nc.insert_relation(diputado, palabra))
+    graph.run(nc.palabras_dichas())
 
 
 def main():

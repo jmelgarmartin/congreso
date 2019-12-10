@@ -171,7 +171,9 @@ def dialog_tagger(dialog):
             output.append(word[0])
         else:
             if word[1][0:1] == 'v':
-                output.append(nlp(word[0])[0].lemma_)
+                temp = nlp(word[0])[0].lemma_
+                if temp not in ['ser', 'hacer', 'ir', 'decir', 'poder', 'estar']:
+                    output.append(temp)
     return output
 
 

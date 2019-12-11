@@ -5,6 +5,7 @@ from nltk.corpus import stopwords
 from nltk.tag import StanfordPOSTagger
 from nltk.tokenize import word_tokenize
 import spacy
+import pandas as pd
 
 import neo4j_connector as nc
 
@@ -92,17 +93,17 @@ def split_text(text):
     for ix, pon in enumerate(reversed(output)):
         pon['pos_dialog_end'] = pos_ini_ant
         pos_ini_ant = pon['pos_ini'] - 1
-        output[len(output) - 1 - ix] = pon
 
     return output
 
 
 def clean_parenthesis(text):
-    regex = r" [(].*[)]"
+    regex = r" \(([^\)]+)\)"
     matches = re.finditer(regex, text)
     output = text
     for matchNum, match in enumerate(matches, start=1):
-        output = output.replace(match.group(), '')
+        t_parentesis = match.group()
+        output = output.replace(t_parentesis, '')
     return output
 
 
@@ -157,29 +158,43 @@ def clean_dialogs(dialogs):
     return dialogs
 
 
-def dialog_tagger(dialog):
-    jar = 'nlp/stanford-postagger.jar'
-    model = 'nlp/spanish.tagger'
-    # para descargar el modelo ejecutar como admin:
-    # python -m spacy download es_core_news_md
-    nlp = spacy.load('es_core_news_md')
-    pos_tagger = StanfordPOSTagger(model, jar, encoding='utf8')
-    words = pos_tagger.tag([dialog])
+def dialog_tagger(dialog, nlp, pos_tagger):
+    print(dialog)
+    print(len(dialog))
+    words = pos_tagger.tag(dialog[0:8])
     output = []
+    print(words)
     for word in words:
         if word[1][0:2] in ['nc', 'np', 'aq']:
             output.append(word[0])
         else:
             if word[1][0:1] == 'v':
                 temp = nlp(word[0])[0].lemma_
-                if temp not in ['ser', 'hacer', 'ir', 'decir', 'poder', 'estar']:
+                if temp not in ['ser', 'hacer', 'ir', 'decir', 'poder', 'estar', 'llevar', 'tener']:
                     output.append(temp)
+    print(output)
     return output
 
 
 def cargar_dialogos(dialogs):
     graph = nc.generate_graph()
     matcher = nc.generate_nodeMatcher(graph)
+    num_dialog = len(dialogs)
+    print("NUMERO DE DIALOGOS: " + str(num_dialog))
+    # CARGAMOS EL MODELO
+    jar = 'nlp/stanford-postagger.jar'
+    model = 'nlp/spanish.tagger'
+    # para descargar el modelo ejecutar como admin:
+    # python -m spacy download es_core_news_md
+    nlp = spacy.load('es_core_news_md')
+    pos_tagger = StanfordPOSTagger(model, jar, encoding='utf8')
+    temp = ''
+    for dialog in dialogs:
+        temp = temp + dialog[1]
+    temp_list = list(set(temp.split(' ')))
+    # TAGUEAMOS TODAS LAS PALABRAS DISTINTAS
+    list_words_tagged = dialog_tagger(temp_list, nlp, pos_tagger)
+    print("PALABRAS TAGGEADAS: ")
     for dialog in dialogs:
         print('CARGAR DIALOGOS')
         diputado = nc.return_diputado(matcher, dialog[0])
@@ -188,13 +203,50 @@ def cargar_dialogos(dialogs):
             print(dialog[0])
             print(dialog[1])
         else:
-            for word in dialog_tagger(dialog[1]):
-                graph.run(nc.insert_palabra(word))
-                palabra = nc.return_palabra(matcher, word)
-                graph.create(nc.insert_relation(diputado, palabra))
+            for word in dialog[1].split(' '):
+                print(word)
+                if word in list_words_tagged:
+                    print('ok')
+                    graph.run(nc.insert_palabra(word))
+                    palabra = nc.return_palabra(matcher, word)
+                    graph.create(nc.insert_relation(diputado, palabra))
+        num_dialog = num_dialog - 1
+        print("DIALOGOS RESTANTES: " + str(num_dialog))
     graph.run(nc.palabras_dichas())
 
-    return graph
+
+def generate_document(list_docs, params):
+    for ind, doc in enumerate(list_docs):
+        print('----------------------- DOCUMENTO ' + str(ind) + ' -----------------------')
+        pagina_inicial = params[doc[0]]['pagina_inicial']
+        frase_inicial = params[doc[0]]['frase_inicial']
+        codigo_documento = params[doc[0]]['codigo_documento']
+        graph = nc.generate_graph()
+        matcher = nc.generate_nodeMatcher(graph)
+        document = ''
+        ix = 0
+        sw_primera_vez = True
+        for page in doc[1].pages:
+            ix = ix + 1
+            if ix >= pagina_inicial:
+                text = page.extractText().lower().replace('\n', '')
+                ini = remove_headers(text)
+                if sw_primera_vez:
+                    ini = ini + text[ini:].find(frase_inicial) + len(frase_inicial)
+                    sw_primera_vez = False
+
+                cl_text = clean_text(text[ini:], codigo_documento)
+
+                regex = r"[ ][A-Za-z]+[:]"
+                matches = re.finditer(regex, cl_text)
+                for matchNum, match in enumerate(matches, start=1):
+                    if match.group() != ' ' + presidencia + ':':
+                        diputado = nc.busca_diputado(matcher, match.group()[1:-1])
+                        if diputado is None:
+                            document = document.replace(match.group(), match.group()[1:-1])
+
+                document = document + cl_text + ' '
+    return document
 
 
 def main():
@@ -208,35 +260,13 @@ def main():
 
     list_docs = obtain_documents(params)
 
-    for ind, doc in enumerate(list_docs):
-        print('----------------------- DOCUMENTO ' + str(ind) + ' -----------------------')
-        pagina_inicial = params[doc[0]]['pagina_inicial']
-        frase_inicial = params[doc[0]]['frase_inicial']
-        codigo_documento = params[doc[0]]['codigo_documento']
-        graph = nc.generate_graph()
-        matcher = nc.generate_nodeMatcher(graph)
-        document = ''
-        ix = 0
-        for page in doc[1].pages:
-            ix = ix + 1
-            if ix >= pagina_inicial:
-                text = page.extractText().lower().replace('\n', '')
-                ini = remove_headers(text)
-                ini = ini + text[ini:].find(frase_inicial) + len(frase_inicial)
-                document = document + clean_text(text[ini:], codigo_documento) + ' '
+    document = generate_document(list_docs, params)
 
-                regex = r"[ ][A-Za-z]+[:]"
-                matches = re.finditer(regex, document)
-                for matchNum, match in enumerate(matches, start=1):
-                    if match.group() != ' ' + presidencia + ':':
-                        diputado = nc.busca_diputado(matcher, match.group()[1:-1])
-                        if diputado is None:
-                            document = document.replace(match.group(), match.group()[1:-1])
+    dialogs = generate_dialogs(document)
 
-        dialogs = generate_dialogs(document)
-        dialogs = clean_dialogs(dialogs)
+    dialogs_clean = clean_dialogs(dialogs)
 
-        cargar_dialogos(dialogs)
+    cargar_dialogos(dialogs_clean)
 
 
 if __name__ == '__main__':

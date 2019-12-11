@@ -57,6 +57,15 @@ def return_diputado(matcher, apellidos):
 def return_palabra(matcher, palabra):
     return matcher.match("Palabra", palabra=palabra).first()
 
+def return_lista_palabras():
+    return 'MATCH (p:Palabra) RETURN p'
+
+def return_grupos_palabras(palabra):
+    query = 'MATCH(d: Diputado)-[r: DICE]->(p:Palabra) '
+    query = query + 'WHERE p.palabra = "' + palabra + '" '
+    query = query + 'RETURN DISTINCT(d.grupo) as grupo'
+    return query
+
 
 def insert_relation(diputado, palabra):
     return Relationship(diputado, 'DICE', palabra)

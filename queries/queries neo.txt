@@ -6,7 +6,7 @@ MATCH (pala:Palabra)
 WHERE pala.palabra = pal
 SET pala.veces = veces
 
-AÑADIR NUEVOS LABELS A UN NODO
+Aï¿½ADIR NUEVOS LABELS A UN NODO
 
 MATCH (d:Diputado)
 WITH d, d.grupo as group
@@ -14,5 +14,7 @@ CALL apoc.create.addLabels(d, [group]) YIELD node
 RETURN count(d) as count
 
 
-
-PARTIDOS QUE DICEN UNA PALABRA
+DISCURSO DE UN GRUPO
+MATCH q=(d:Diputado)-[r:DICE]->(p:Palabra)
+WHERE d.grupo = "Grupo Podemos"
+RETURN q

@@ -1,20 +1,28 @@
-from neo4j.v1 import GraphDatabase, basic_auth
-import graphistry
+import matplotlib.pyplot as plt
+from PIL import Image
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 
-#PROBAR
 
-# https://github.com/jexp/neo4j-3d-force-graph
+def visualizar_palabras(dialogs):
+    lista = ''
+    for dialog in dialogs:
+        lista = lista + dialog[1]
+    wordcloud = WordCloud(
+        background_color='white',
+        max_font_size=50,
+        random_state=42
+    ).generate(str(lista))
+    print(wordcloud)
+    fig = plt.figure(1)
+    plt.imshow(wordcloud)
+    plt.axis('off')
+    plt.show()
 
 
 def main():
-    NEO4J_CREDS = {'uri': 'http://localhost:7474', 'auth': ('neo4j', 'capgemini')}
-    graphistry.register(bolt=NEO4J_CREDS)
-#    graphistry.cypher("MATCH g=(p:Palabra)<--(d:Diputado) WHERE p.veces > 3 RETURN g").plot()
+    pass
 
-    graphistry.cypher("CALL db.schema()").plot()
 
 if __name__ == '__main__':
     main()
     print('FIN PROCESO')
-
-

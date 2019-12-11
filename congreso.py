@@ -162,6 +162,7 @@ def clean_dialogs(dialogs):
 def dialog_tagger(dialog, nlp, pos_tagger, create_model):
     print("INICIO TAG:")
     if create_model:
+        salto = 800
         a = len(dialog)
         b = 0
         print(a)
@@ -170,7 +171,7 @@ def dialog_tagger(dialog, nlp, pos_tagger, create_model):
                 with open('words.pickle', 'rb') as handle:
                     words = pickle.load(handle)
                     print(datetime.now())
-                    words.extend(pos_tagger.tag(dialog[b:b + 200]))
+                    words.extend(pos_tagger.tag(dialog[b:b + salto]))
                     print(len(words))
                     print(datetime.now())
                     with open('words.pickle', 'wb') as handle:
@@ -178,12 +179,11 @@ def dialog_tagger(dialog, nlp, pos_tagger, create_model):
             except:
                 print("CREAMOS NUEVO MODELO")
                 print(datetime.now())
-                words = pos_tagger.tag(dialog[b:b + 400])
+                words = pos_tagger.tag(dialog[b:b + salto])
                 with open('words.pickle', 'wb') as handle:
                     pickle.dump(words, handle, protocol=pickle.HIGHEST_PROTOCOL)
                 print(datetime.now())
-            b = b + 399
-            print(b)
+            b = b + salto - 1
     else:
         with open('words.pickle', 'rb') as handle:
             words = pickle.load(handle)
@@ -193,13 +193,13 @@ def dialog_tagger(dialog, nlp, pos_tagger, create_model):
 
     for word in words:
         if word[1][0:2] in ['nc', 'np', 'aq']:
-            output.append(word[0])
+            output.append(nlp(word[0])[0].lemma_)
         else:
             if word[1][0:1] == 'v':
                 temp = nlp(word[0])[0].lemma_
                 if temp not in ['ser', 'hacer', 'ir', 'decir', 'poder', 'estar', 'llevar', 'tener']:
                     output.append(temp)
-    print(output)
+
     return output
 
 
@@ -217,11 +217,12 @@ def cargar_dialogos(dialogs, create_model):
     pos_tagger = StanfordPOSTagger(model, jar, encoding='utf8')
     temp = ''
     for dialog in dialogs:
-        temp = temp + dialog[1]
-    temp_list = list(set(temp.split(' ')))
+        temp = temp + dialog[1] + ' '
+    temp_list = temp.split(' ')
     # TAGUEAMOS TODAS LAS PALABRAS DISTINTAS
     list_words_tagged = dialog_tagger(temp_list, nlp, pos_tagger, create_model)
     print("PALABRAS TAGGEADAS: " + str(len(list_words_tagged)))
+    print(list_words_tagged)
     for dialog in dialogs:
         print('CARGAR DIALOGOS')
         diputado = nc.return_diputado(matcher, dialog[0])
@@ -231,10 +232,14 @@ def cargar_dialogos(dialogs, create_model):
             print(dialog[1])
         else:
             for word in dialog[1].split(' '):
-                if word in list_words_tagged:
+                if nlp(word)[0].lemma_ in list_words_tagged:
                     graph.run(nc.insert_palabra(word))
                     palabra = nc.return_palabra(matcher, word)
                     graph.create(nc.insert_relation(diputado, palabra))
+                # else:
+                #      print("PALABRA NO ENCONTRADA: ")
+                #      print(word)
+                #      print(nlp(word)[0].lemma_)
         num_dialog = num_dialog - 1
         print("DIALOGOS RESTANTES: " + str(num_dialog))
     graph.run(nc.palabras_dichas())

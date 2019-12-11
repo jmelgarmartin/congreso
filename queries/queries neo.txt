@@ -15,6 +15,16 @@ RETURN count(d) as count
 
 
 DISCURSO DE UN GRUPO
+
 MATCH q=(d:Diputado)-[r:DICE]->(p:Palabra)
 WHERE d.grupo = "Grupo Podemos"
 RETURN q
+
+PALABRAS MAS DICHAS POR UN GRUPO
+
+MATCH q=(d:Diputado)-[r]->(p:Palabra)
+WHERE d.grupo = "Grupo Podemos"
+WITH p.palabra as palabra, d.grupo as grupo, count(r) as veces_dicho
+RETURN palabra, grupo, veces_dicho
+ORDER BY veces_dicho DESc
+LIMIT 25

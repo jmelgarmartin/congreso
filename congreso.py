@@ -5,7 +5,8 @@ from nltk.corpus import stopwords
 from nltk.tag import StanfordPOSTagger
 from nltk.tokenize import word_tokenize
 import spacy
-import pandas as pd
+from datetime import datetime
+import pickle
 
 import neo4j_connector as nc
 
@@ -159,11 +160,19 @@ def clean_dialogs(dialogs):
 
 
 def dialog_tagger(dialog, nlp, pos_tagger):
-    print(dialog)
-    print(len(dialog))
-    words = pos_tagger.tag(dialog[0:8])
+    print("INICIO TAG:")
+    try:
+        with open('words.pickle', 'rb') as handle:
+            words = pickle.load(handle)
+    except:
+        print("CREAMOS NUEVO MODELO")
+        print(datetime.now())
+        words = pos_tagger.tag(dialog)
+        with open('words.pickle', 'wb') as handle:
+            pickle.dump(words, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        print(datetime.now())
     output = []
-    print(words)
+
     for word in words:
         if word[1][0:2] in ['nc', 'np', 'aq']:
             output.append(word[0])
@@ -194,7 +203,7 @@ def cargar_dialogos(dialogs):
     temp_list = list(set(temp.split(' ')))
     # TAGUEAMOS TODAS LAS PALABRAS DISTINTAS
     list_words_tagged = dialog_tagger(temp_list, nlp, pos_tagger)
-    print("PALABRAS TAGGEADAS: ")
+    print("PALABRAS TAGGEADAS: " + str(len(list_words_tagged)))
     for dialog in dialogs:
         print('CARGAR DIALOGOS')
         diputado = nc.return_diputado(matcher, dialog[0])

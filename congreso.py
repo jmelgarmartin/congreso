@@ -246,6 +246,7 @@ def cargar_dialogos(dialogs, create_model):
 
 
 def generate_document(list_docs, params):
+    document = ''
     for ind, doc in enumerate(list_docs):
         print('----------------------- DOCUMENTO ' + str(ind) + ' -----------------------')
         pagina_inicial = params[doc[0]]['pagina_inicial']
@@ -253,7 +254,6 @@ def generate_document(list_docs, params):
         codigo_documento = params[doc[0]]['codigo_documento']
         graph = nc.generate_graph()
         matcher = nc.generate_nodeMatcher(graph)
-        document = ''
         ix = 0
         sw_primera_vez = True
         for page in doc[1].pages:

@@ -159,18 +159,36 @@ def clean_dialogs(dialogs):
     return dialogs
 
 
-def dialog_tagger(dialog, nlp, pos_tagger):
+def dialog_tagger(dialog, nlp, pos_tagger, create_model):
     print("INICIO TAG:")
-    try:
+    if create_model:
+        a = len(dialog)
+        b = 0
+        print(a)
+        while b < a:
+            try:
+                with open('words.pickle', 'rb') as handle:
+                    words = pickle.load(handle)
+                    print(datetime.now())
+                    words.extend(pos_tagger.tag(dialog[b:b + 200]))
+                    print(len(words))
+                    print(datetime.now())
+                    with open('words.pickle', 'wb') as handle:
+                        pickle.dump(words, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            except:
+                print("CREAMOS NUEVO MODELO")
+                print(datetime.now())
+                words = pos_tagger.tag(dialog[b:b + 400])
+                with open('words.pickle', 'wb') as handle:
+                    pickle.dump(words, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                print(datetime.now())
+            b = b + 399
+            print(b)
+    else:
         with open('words.pickle', 'rb') as handle:
             words = pickle.load(handle)
-    except:
-        print("CREAMOS NUEVO MODELO")
-        print(datetime.now())
-        words = pos_tagger.tag(dialog)
-        with open('words.pickle', 'wb') as handle:
-            pickle.dump(words, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        print(datetime.now())
+
+    words = list(set(words))
     output = []
 
     for word in words:
@@ -185,7 +203,7 @@ def dialog_tagger(dialog, nlp, pos_tagger):
     return output
 
 
-def cargar_dialogos(dialogs):
+def cargar_dialogos(dialogs, create_model):
     graph = nc.generate_graph()
     matcher = nc.generate_nodeMatcher(graph)
     num_dialog = len(dialogs)
@@ -202,7 +220,7 @@ def cargar_dialogos(dialogs):
         temp = temp + dialog[1]
     temp_list = list(set(temp.split(' ')))
     # TAGUEAMOS TODAS LAS PALABRAS DISTINTAS
-    list_words_tagged = dialog_tagger(temp_list, nlp, pos_tagger)
+    list_words_tagged = dialog_tagger(temp_list, nlp, pos_tagger, create_model)
     print("PALABRAS TAGGEADAS: " + str(len(list_words_tagged)))
     for dialog in dialogs:
         print('CARGAR DIALOGOS')
@@ -213,9 +231,7 @@ def cargar_dialogos(dialogs):
             print(dialog[1])
         else:
             for word in dialog[1].split(' '):
-                print(word)
                 if word in list_words_tagged:
-                    print('ok')
                     graph.run(nc.insert_palabra(word))
                     palabra = nc.return_palabra(matcher, word)
                     graph.create(nc.insert_relation(diputado, palabra))
@@ -258,7 +274,7 @@ def generate_document(list_docs, params):
     return document
 
 
-def main():
+def main(create_model):
     params = {'doc_0.pdf': {'pagina_inicial': 5,
                             'frase_inicial': '(Prolongados aplausos del Grupo Parlamentario Socialista).',
                             'codigo_documento': 'cve: dscd-13-pl-2'},
@@ -275,9 +291,10 @@ def main():
 
     dialogs_clean = clean_dialogs(dialogs)
 
-    cargar_dialogos(dialogs_clean)
+    cargar_dialogos(dialogs_clean, create_model)
 
 
 if __name__ == '__main__':
-    main()
+    create_model = True
+    main(create_model)
     print('FIN PROCESO')

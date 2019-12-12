@@ -229,9 +229,9 @@ def cargar_dialogos(dialogs, create_model):
             for word in dialog[1].split(' '):
                 lemma = nlp(word)[0].lemma_
                 if lemma in list_words_tagged:
-                    graph.run(nc.insert_palabra(lemma))
+                    graph.run(nc.insert_palabra(word))
                     #                    palabra = nc.return_palabra(matcher, lemma)
-                    graph.run(nc.insert_relation(diputado['apellidos'], lemma))
+                    graph.run(nc.insert_relation(diputado['apellidos'], word))
                 # else:
                 #      print("PALABRA NO ENCONTRADA: ")
                 #      print(word)

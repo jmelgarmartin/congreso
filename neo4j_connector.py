@@ -68,6 +68,10 @@ def return_grupos_palabras(palabra):
 
 
 def insert_relation(diputado, palabra):
-    return Relationship(diputado, 'DICE', palabra)
+    query ='MATCH(d: Diputado {apellidos: "' + diputado
+    query = query + '"}), (p:Palabra {palabra: "' + palabra
+    query = query + '"}) CREATE(d) - [:DICE]->(p)'
+    return query
+
 
 

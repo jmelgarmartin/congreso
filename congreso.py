@@ -5,7 +5,6 @@ from nltk.corpus import stopwords
 from nltk.tag import StanfordPOSTagger
 from nltk.tokenize import word_tokenize
 import spacy
-from datetime import datetime
 import pickle
 
 import neo4j_connector as nc
@@ -170,34 +169,31 @@ def dialog_tagger(dialog, nlp, pos_tagger, create_model):
             try:
                 with open('words.pickle', 'rb') as handle:
                     words = pickle.load(handle)
-                    print(datetime.now())
                     words.extend(pos_tagger.tag(dialog[b:b + salto]))
-                    print(len(words))
-                    print(datetime.now())
                     with open('words.pickle', 'wb') as handle:
                         pickle.dump(words, handle, protocol=pickle.HIGHEST_PROTOCOL)
             except:
                 print("CREAMOS NUEVO MODELO")
-                print(datetime.now())
                 words = pos_tagger.tag(dialog[b:b + salto])
                 with open('words.pickle', 'wb') as handle:
                     pickle.dump(words, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                print(datetime.now())
             b = b + salto - 1
     else:
         with open('words.pickle', 'rb') as handle:
             words = pickle.load(handle)
 
+    print("MODELO TERMINADO")
     words = list(set(words))
     output = []
 
     for word in words:
+        temp = nlp(word[0])[0].lemma_
         if word[1][0:2] in ['nc', 'np', 'aq']:
-            output.append(nlp(word[0])[0].lemma_)
+            if temp not in ['así', 'parte', 'puede', 'hace', 'hacer', 'diputado', 'diputados']:
+                output.append(temp)
         else:
             if word[1][0:1] == 'v':
-                temp = nlp(word[0])[0].lemma_
-                if temp not in ['ser', 'hacer', 'ir', 'decir', 'poder', 'estar', 'llevar', 'tener']:
+                if temp not in ['ser', 'hacer', 'ir', 'decir', 'poder', 'estar', 'llevar', 'tener', 'querer']:
                     output.append(temp)
 
     return output
@@ -222,7 +218,6 @@ def cargar_dialogos(dialogs, create_model):
     # TAGUEAMOS TODAS LAS PALABRAS DISTINTAS
     list_words_tagged = dialog_tagger(temp_list, nlp, pos_tagger, create_model)
     print("PALABRAS TAGGEADAS: " + str(len(list_words_tagged)))
-    print(list_words_tagged)
     for dialog in dialogs:
         print('CARGAR DIALOGOS')
         diputado = nc.return_diputado(matcher, dialog[0])
@@ -232,10 +227,11 @@ def cargar_dialogos(dialogs, create_model):
             print(dialog[1])
         else:
             for word in dialog[1].split(' '):
-                if nlp(word)[0].lemma_ in list_words_tagged:
-                    graph.run(nc.insert_palabra(word))
-                    palabra = nc.return_palabra(matcher, word)
-                    graph.create(nc.insert_relation(diputado, palabra))
+                lemma = nlp(word)[0].lemma_
+                if lemma in list_words_tagged:
+                    graph.run(nc.insert_palabra(lemma))
+                    #                    palabra = nc.return_palabra(matcher, lemma)
+                    graph.run(nc.insert_relation(diputado['apellidos'], lemma))
                 # else:
                 #      print("PALABRA NO ENCONTRADA: ")
                 #      print(word)
@@ -300,6 +296,6 @@ def main(create_model):
 
 
 if __name__ == '__main__':
-    create_model = True
+    create_model = False
     main(create_model)
     print('FIN PROCESO')

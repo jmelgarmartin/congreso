@@ -24,7 +24,16 @@ PALABRAS MAS DICHAS POR UN GRUPO
 
 MATCH q=(d:Diputado)-[r]->(p:Palabra)
 WHERE d.grupo = "Grupo Podemos"
-WITH p.palabra as palabra, d.grupo as grupo, count(r) as veces_dicho
+WITH p.palabra AS palabra, d.grupo AS grupo, COUNT(r) AS veces_dicho
 RETURN palabra, grupo, veces_dicho
-ORDER BY veces_dicho DESc
+ORDER BY veces_dicho DESC
+LIMIT 25
+
+CON DIPUTADO
+
+MATCH q=(d:Diputado)-[r]->(p:Palabra)
+WHERE d.grupo = "Grupo Popular"
+WITH p.palabra AS palabra, d.grupo AS grupo, d.apellidos AS diputado, COUNT(r) AS veces_dicho
+RETURN palabra, grupo, diputado, veces_dicho
+ORDER BY veces_dicho DESC
 LIMIT 25

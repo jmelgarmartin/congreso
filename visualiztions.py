@@ -1,28 +1,36 @@
-import matplotlib.pyplot as plt
-from PIL import Image
-from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+import dash
+import dash_cytoscape as cyto
+import dash_html_components as html
+import pandas as pd
 
+import neo4j_connector as nc
 
-def visualizar_palabras(dialogs):
-    lista = ''
-    for dialog in dialogs:
-        lista = lista + dialog[1]
-    wordcloud = WordCloud(
-        background_color='white',
-        max_font_size=50,
-        random_state=42
-    ).generate(str(lista))
-    print(wordcloud)
-    fig = plt.figure(1)
-    plt.imshow(wordcloud)
-    plt.axis('off')
-    plt.show()
+graph = nc.generate_graph()
+print(nc.add_labels_diputados())
+graph.run(nc.add_labels_diputados())
+graph.run(nc.add_labels_palabras())
 
+df = pd.DataFrame(graph.run(nc.return_graph()).to_data_frame())
+print('--------')
+print(df)
+print('--------')
+diputados = list(set(df['diputado'].to_list()))
+palabras = list(set(df['palabra'].to_list()))
+print(diputados)
+print(palabras)
 
-def main():
-    pass
-
+app = dash.Dash(__name__)
+app.layout = html.Div([
+    cyto.Cytoscape(
+        id='cytoscape',
+        elements=[
+            {'data': {'id': 'one', 'label': 'Node 1'}, 'position': {'x': 50, 'y': 50}},
+            {'data': {'id': 'two', 'label': 'Node 2'}, 'position': {'x': 200, 'y': 200}},
+            {'data': {'source': 'one', 'target': 'two', 'label': 'Node 1 to 2'}}
+        ],
+        layout={'name': 'preset'}
+    )
+])
 
 if __name__ == '__main__':
-    main()
-    print('FIN PROCESO')
+    app.run_server(debug=True)

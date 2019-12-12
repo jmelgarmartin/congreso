@@ -37,3 +37,10 @@ WITH p.palabra AS palabra, d.grupo AS grupo, d.apellidos AS diputado, COUNT(r) A
 RETURN palabra, grupo, diputado, veces_dicho
 ORDER BY veces_dicho DESC
 LIMIT 25
+
+CYTOSCAPE
+
+MATCH (d:Diputado)-[r]->(p:Palabra)
+WHERE p.veces > 2
+RETURN d, r, p
+LIMIT 25

@@ -35,6 +35,22 @@ def palabras_dichas():
     query = query + 'SET pala.veces = veces '
     return query
 
+def add_labels_diputados():
+    # Para Cytoscape
+    return '''
+    MATCH (d:Diputado) 
+    SET d.label = d.apellidos + ' '  + d.nombre 
+    RETURN d
+    '''
+
+def add_labels_palabras():
+    # Para Cytoscape
+    return '''
+       MATCH (p:Palabra) 
+       SET p.label = p.palabra 
+       RETURN p
+       '''
+
 
 def insert_palabra(palabra):
     query = 'MERGE (p:Palabra {palabra: "' + palabra.strip() + '"}) '
@@ -72,6 +88,13 @@ def insert_relation(diputado, palabra):
     query = query + '"}), (p:Palabra {palabra: "' + palabra
     query = query + '"}) CREATE(d) - [:DICE]->(p)'
     return query
+
+def return_graph():
+    return '''MATCH (d:Diputado)-[r]->(p:Palabra) 
+    WHERE p.veces > 2 
+    RETURN d as diputado, p as palabra 
+    LIMIT 25
+    '''
 
 
 

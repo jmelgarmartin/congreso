@@ -239,6 +239,8 @@ def cargar_dialogos(dialogs, create_model):
         num_dialog = num_dialog - 1
         print("DIALOGOS RESTANTES: " + str(num_dialog))
     graph.run(nc.palabras_dichas())
+    graph.run(nc.add_labels_diputados())
+    graph.run(nc.add_labels_palabras())
 
 
 def generate_document(list_docs, params):

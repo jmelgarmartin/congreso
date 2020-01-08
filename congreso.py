@@ -59,7 +59,7 @@ def clean_text(text, cod_docu):
         .replace('incluso podría hablar con la señora arrimadas:', 'incluso podría hablar con la señora arrimadas') \
         .replace('ministra de hacienda  montero cuadrado:', 'ministra de hacienda  montero cuadrado') \
         .replace('patronos del señor sánchez:', 'patronos del señor sánchez') \
-        .replace('victoria kent dijera:', 'victoria kent dijera') \
+        .replace('victoria kent dijera:', 'victoria kent dijera').replace('borges:', 'borges') \
         .replace('?', '').replace('¿', '').replace('«', '').replace('»', '') \
         .replace('  ', ' ').replace('.', ' ').replace(',', ' ') \
         .replace('š', ' ').replace(';', ' ').replace('!', ' ').replace('¡', ' ') \

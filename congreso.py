@@ -189,11 +189,11 @@ def dialog_tagger(dialog, nlp, pos_tagger, create_model):
     for word in words:
         temp = nlp(word[0])[0].lemma_
         if word[1][0:2] in ['nc', 'np', 'aq']:
-            if temp not in ['así', 'parte', 'puede', 'hace', 'hacer', 'diputado', 'diputados']:
+            if temp not in ['así', 'parte', 'puede', 'hace', 'hacer', 'diputado', 'diputados', '%']:
                 output.append(temp)
         else:
             if word[1][0:1] == 'v':
-                if temp not in ['ser', 'hacer', 'ir', 'decir', 'poder', 'estar', 'llevar', 'tener', 'querer']:
+                if temp not in ['ser', 'hacer', 'ir', 'decir', 'poder', 'estar', 'llevar', 'tener', 'querer', 'ser']:
                     output.append(temp)
 
     return output
@@ -278,12 +278,12 @@ def generate_document(list_docs, params):
 
 
 def main(create_model):
-    params = {'doc_0.pdf': {'pagina_inicial': 5,
-                            'frase_inicial': '(Prolongados aplausos del Grupo Parlamentario Socialista).',
-                            'codigo_documento': 'cve: dscd-13-pl-2'},
-              'doc_1.pdf': {'pagina_inicial': 3,
+    params = {'doc_0.pdf': {'pagina_inicial': 7,
                             'frase_inicial': '',
-                            'codigo_documento': 'cve: dscd-13-pl-3'},
+                            'codigo_documento': 'cve: dscd-14-pl-2'},
+              'doc_1.pdf': {'pagina_inicial': 2,
+                            'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
+                            'codigo_documento': 'cve: dscd-14-pl-3'},
               }
 
     list_docs = obtain_documents(params)

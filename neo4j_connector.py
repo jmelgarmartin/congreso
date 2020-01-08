@@ -29,7 +29,7 @@ def asignar_partidos():
 def palabras_dichas():
     # ACTUALIZAR NUMERO DE VECES QUE SE DICE UNA PALABRA
     query = 'MATCH (:Diputado)-[r]->(p:Palabra) '
-    query = query + 'WITH p.palabra as pal, count(r) as veces '
+    query = query + 'WITH p.palabra as pal, SUM(r.veces) as veces '
     query = query + 'MATCH (pala:Palabra) '
     query = query + 'WHERE pala.palabra = pal '
     query = query + 'SET pala.veces = veces '
@@ -39,7 +39,8 @@ def add_labels_diputados():
     # Para Cytoscape
     return '''
     MATCH (d:Diputado) 
-    SET d.label = d.apellidos + ' '  + d.nombre 
+    SET d.label = d.apellidos + ' '  + d.nombre ,
+    d.veces = 50
     RETURN d
     '''
 
@@ -84,9 +85,11 @@ def return_grupos_palabras(palabra):
 
 
 def insert_relation(diputado, palabra):
-    query ='MATCH(d: Diputado {apellidos: "' + diputado
-    query = query + '"}), (p:Palabra {palabra: "' + palabra
-    query = query + '"}) CREATE(d) - [:DICE]->(p)'
+    query ='MATCH(d: Diputado {apellidos: "' + diputado + '"}) '
+    query = query + 'MERGE (p:Palabra {palabra: "' + palabra + '"}) '
+    query = query + 'MERGE (d) -[r:DICE]->(p) '
+    query = query + 'ON CREATE SET r.veces = 1, r.grupo = d.grupo '
+    query = query + 'ON MATCH SET r.veces = r.veces + 1'
     return query
 
 def return_graph():

@@ -23,6 +23,8 @@ def main():
         '(GMx)': 'Grupo Mixto',
         '(GS)': 'Grupo Socialista',
         '(GP)': 'Grupo Popular',
+        '(GEH Bildu)': 'Grupo EH Bildu',
+        '(GPlu)': 'Grupo Plural',
         '(IND)': 'Independiente'
     }
     diputados = []
@@ -30,6 +32,7 @@ def main():
         data = line.replace('\n', '')
 
         if data != '':
+            print(data)
             apellidos, nombre = data.split(',')
             regex = r" [(].*[)]"
             matches = re.findall(regex, nombre)

@@ -11,6 +11,7 @@ import neo4j_connector as nc
 
 # variables generales para la configuracion del proceso
 presidencia = 'presidenta'
+vicepresidencia = 'vicepresidete'
 pagina_inicial = 0
 frase_inicial = ''
 codigo_documento = ''
@@ -26,19 +27,9 @@ def obtain_documents(params):
 
 
 def remove_headers(page):
-    output = page.find("pág. 1")
-    if output > 0:
-        # primera página
-        output = output + 6
-        inicio = page[output:].find("orden del día:")
-        if inicio > 0:
-            output = output + inicio + 14
-        else:
-            output = output + 14
-    else:
-        output = page.find("pág. ") + 6
+    output = page.find("pág. ") + 6
     while True:
-        if page[output:1].isdigit():
+        if page[output: output + 1].isdigit():
             output = output + 1
         else:
             break
@@ -47,14 +38,32 @@ def remove_headers(page):
 
 def clean_text(text, cod_docu):
     # arreglos especiales...... ye vere si puedo corregirlos mejor
-    return text.replace(cod_docu, '').replace('.', ' ').replace(',', ' ') \
-        .replace('š', ' ').replace(';', ' ').replace('!', ' ').replace('¡', ' ') \
-        .replace('–', ' ').replace(' : ', ': ').replace('momento:', 'momento') \
+    return text.replace(cod_docu, '').replace('momento:', 'momento') \
         .replace('rodrí guez', 'rodríguez').replace('catalunya', 'cataluña') \
+        .replace('sanchez', 'sánchez') \
         .replace('cataluña:', 'cataluña').replace('sorprender:', 'sorprender') \
-        .replace(' de:', ' de').replace('también:', 'también') \
-        .replace('?', '').replace('¿', '') \
-        .replace('  ', ' ')
+        .replace('matiz:', 'matiz').replace('yo se lo digo:', 'yo se lo digo') \
+        .replace(' de:', ' de').replace('también:', 'también').replace('castejon', 'castejón') \
+        .replace('cosas:', 'cosas').replace('lo repito:', 'lo repito') \
+        .replace('y también dijo el señor maroto:', 'y también dijo el señor maroto') \
+        .replace('decía el señor rivera:', 'decía el señor rivera') \
+        .replace('puigdemont y la cup:', 'puigdemont y la cup') \
+        .replace('rufián  parafraseando a borges:', 'rufián  parafraseando a borges') \
+        .replace('(la señora ministra de hacienda, montero cuadrado:',
+                 '(la señora ministra de hacienda, montero cuadrado') \
+        .replace('sánchez es como un jinete que va en un caballo directo a un precipicio y lo que dice es:',
+                 'sánchez es como un jinete que va en un caballo directo a un precipicio y lo que dice es') \
+        .replace('lo que dice es:', 'lo que dice es') \
+        .replace('sánchez decía:', 'sánchez decía').replace('sánchez dijo:', 'sánchez dijo') \
+        .replace('sánchez  que fíjense si ha dicho cosas:', 'sánchez  que fíjense si ha dicho cosas') \
+        .replace('incluso podría hablar con la señora arrimadas:', 'incluso podría hablar con la señora arrimadas') \
+        .replace('ministra de hacienda  montero cuadrado:', 'ministra de hacienda  montero cuadrado') \
+        .replace('patronos del señor sánchez:', 'patronos del señor sánchez') \
+        .replace('victoria kent dijera:', 'victoria kent dijera') \
+        .replace('?', '').replace('¿', '').replace('«', '').replace('»', '') \
+        .replace('  ', ' ').replace('.', ' ').replace(',', ' ') \
+        .replace('š', ' ').replace(';', ' ').replace('!', ' ').replace('¡', ' ') \
+        .replace('–', ' ').replace(' : ', ': ')
 
 
 def find_ponentes(text, regex):
@@ -128,7 +137,8 @@ def generate_dialogs(document):
     output = []
     for dialog in dialogs:
         if dialog[0].find(presidencia) == -1:
-            output.append(dialog)
+            if dialog[0].find(vicepresidencia) == -1:
+                output.append(dialog)
     return output
 
 
@@ -268,7 +278,7 @@ def generate_document(list_docs, params):
                 regex = r"[ ][A-Za-z]+[:]"
                 matches = re.finditer(regex, cl_text)
                 for matchNum, match in enumerate(matches, start=1):
-                    if match.group() != ' ' + presidencia + ':':
+                    if (match.group() != ' ' + presidencia + ':') and (match.group() != ' ' + vicepresidencia + ':'):
                         diputado = nc.busca_diputado(matcher, match.group()[1:-1])
                         if diputado is None:
                             document = document.replace(match.group(), match.group()[1:-1])
@@ -288,7 +298,20 @@ def main(create_model):
 
     list_docs = obtain_documents(params)
 
-    document = generate_document(list_docs, params)
+    document = generate_document(list_docs, params).replace(
+        '(aplausos  la señora ministra de hacienda  montero cuadrado:  ahora )', '').replace(
+        '(el señor betoret coll:  cuéntanos el pacto con esquerra  rumores)', '').replace(
+        'la señora presidenta: señorías, por favor, guarden silencio.', '').replace(
+        '(el señor casado blanco: el qué  el qué)', '').replace(
+        '(protestas  el señor de olano vela:  fuisteis vosotros  que tenéis mucha cara )', '').replace(
+        'presidenta: señorías', '').replace(
+        '(el señor sánchez pérez-castejón  candidato a la presidencia del gobierno:  ya  ya  rumores  aplausos)',
+        '').replace('(la señora olano choclán:  qué vergüenza )', '').replace(
+        '(protestas  un señordiputado  venga ya  el señor espinosa de los monteros simón:  a mí me daría vergüenza )',
+        '').replace('casado  ha dicho literalmente:', 'casado  ha dicho literalmente').replace(
+        'de la mesa el partido de la señora arrimadas:', 'de la mesa el partido de la señora arrimadas').replace(
+        '(la señora ministra de hacienda en funciones  montero cuadrado:  hombre   derrotados )', '').replace(
+        'el señora', 'la señora')
 
     dialogs = generate_dialogs(document)
 

@@ -121,6 +121,7 @@ def clean_mr_mrs(text):
 
 
 def generate_dialogs(documents):
+    outputs = []
     for document in documents:
         dialogs = []
         for element in split_text(document):
@@ -140,7 +141,8 @@ def generate_dialogs(documents):
             if dialog[0].find(presidencia) == -1:
                 if dialog[0].find(vicepresidencia) == -1:
                     output.append(dialog)
-        return output
+        outputs.append([output, document[1]])
+    return outputs
 
 
 def clean_names(name):

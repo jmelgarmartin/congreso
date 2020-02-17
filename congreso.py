@@ -124,13 +124,13 @@ def generate_dialogs(documents):
     outputs = []
     for document in documents:
         dialogs = []
-        for element in split_text(document):
+        for element in split_text(document[0]):
             if element['pos_dialog_end'] == 0:
-                dialogs.append([document[element['pos_ini']: element['pos_fin']],
-                                document[element['pos_fin'] + 1:]])
+                dialogs.append([document[0][element['pos_ini']: element['pos_fin']],
+                                document[0][element['pos_fin'] + 1:]])
             else:
-                dialogs.append([document[element['pos_ini']: element['pos_fin']],
-                                document[element['pos_fin'] + 1: element['pos_dialog_end']]])
+                dialogs.append([document[0][element['pos_ini']: element['pos_fin']],
+                                document[0][element['pos_fin'] + 1: element['pos_dialog_end']]])
         for ix, dialog in enumerate(dialogs):
             dialogs[ix][0] = clean_mr_mrs(clean_parenthesis(dialog[0]))
             dialogs[ix][1] = clean_mr_mrs(clean_parenthesis(dialog[1])).replace(':', ' ') \
@@ -141,7 +141,7 @@ def generate_dialogs(documents):
             if dialog[0].find(presidencia) == -1:
                 if dialog[0].find(vicepresidencia) == -1:
                     output.append(dialog)
-        outputs.append([output, document[1]])
+        outputs.append([output, document[1].replace('cve: ', '')])
     return outputs
 
 
@@ -211,7 +211,6 @@ def dialog_tagger(dialog, nlp, pos_tagger, create_model):
 
     return output
 
-
 def cargar_dialogos(dialogs, create_model):
     graph = nc.generate_graph()
     matcher = nc.generate_nodeMatcher(graph)
@@ -244,7 +243,7 @@ def cargar_dialogos(dialogs, create_model):
                 if lemma in list_words_tagged:
                     graph.run(nc.insert_palabra(word))
                     #                    palabra = nc.return_palabra(matcher, lemma)
-                    graph.run(nc.insert_relation(diputado['apellidos'], word))
+                    graph.run(nc.insert_relation(diputado['apellidos'], word, dialog[2]))
                 # else:
                 #      print("PALABRA NO ENCONTRADA: ")
                 #      print(word)
@@ -305,7 +304,7 @@ def generate_documents(list_docs, params):
                             document = document.replace(match.group(), match.group()[1:-1])
 
                 document = document + cl_text + ' '
-        documents.append([clean_document(document), codigo_documento])
+        documents.append([clean_parenthesis(clean_document(document)), codigo_documento])
     return documents
 
 
@@ -316,7 +315,11 @@ def main(create_model, params):
 
     dialogs = generate_dialogs(documents)
 
-    dialogs_clean = clean_dialogs(dialogs)
+#AQUI ????????
+    dialogs_clean = []
+    for dialog, doc in dialogs:
+        for cl_dialog in clean_dialogs(dialog):
+            dialogs_clean.append([cl_dialog[0], cl_dialog[1], doc])
 
     cargar_dialogos(dialogs_clean, create_model)
 

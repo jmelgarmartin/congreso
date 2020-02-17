@@ -5,7 +5,7 @@ def generate_graph():
     neo4j_user = 'neo4j'
     #    neo4j_pass = 'congreso'
     neo4j_pass = 'atsistemas'
-    return Graph(secure=True, auth=(neo4j_user, neo4j_pass))
+    return Graph(secure=True, auth=(neo4j_user, neo4j_pass), bolt_port=7687)
 
 
 def insert_diputado(diputado):
@@ -84,12 +84,12 @@ def return_grupos_palabras(palabra):
     return query
 
 
-def insert_relation(diputado, palabra):
+def insert_relation(diputado, palabra, num_pleno):
     query ='MATCH(d: Diputado {apellidos: "' + diputado + '"}) '
     query = query + 'MERGE (p:Palabra {palabra: "' + palabra + '"}) '
     query = query + 'MERGE (d) -[r:DICE]->(p) '
-    query = query + 'ON CREATE SET r.veces = 1, r.grupo = d.grupo '
-    query = query + 'ON MATCH SET r.veces = r.veces + 1'
+    query = query + 'ON CREATE SET r.veces = 1, r.grupo = d.grupo , r.pleno = "' + num_pleno + '"'
+#    query = query + 'ON MATCH SET r.veces = r.veces + 1'
     return query
 
 def return_graph():

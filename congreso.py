@@ -120,26 +120,27 @@ def clean_mr_mrs(text):
     return text.replace('el señor ', '').replace('la señora ', '').replace('señor ', '').replace('señora ', '')
 
 
-def generate_dialogs(document):
-    dialogs = []
-    for element in split_text(document):
-        if element['pos_dialog_end'] == 0:
-            dialogs.append([document[element['pos_ini']: element['pos_fin']],
-                            document[element['pos_fin'] + 1:]])
-        else:
-            dialogs.append([document[element['pos_ini']: element['pos_fin']],
-                            document[element['pos_fin'] + 1: element['pos_dialog_end']]])
-    for ix, dialog in enumerate(dialogs):
-        dialogs[ix][0] = clean_mr_mrs(clean_parenthesis(dialog[0]))
-        dialogs[ix][1] = clean_mr_mrs(clean_parenthesis(dialog[1])).replace(':', ' ') \
-            .replace('(', ' ').replace(')', ' ') \
-            .replace('  ', ' ')
-    output = []
-    for dialog in dialogs:
-        if dialog[0].find(presidencia) == -1:
-            if dialog[0].find(vicepresidencia) == -1:
-                output.append(dialog)
-    return output
+def generate_dialogs(documents):
+    for document in documents:
+        dialogs = []
+        for element in split_text(document):
+            if element['pos_dialog_end'] == 0:
+                dialogs.append([document[element['pos_ini']: element['pos_fin']],
+                                document[element['pos_fin'] + 1:]])
+            else:
+                dialogs.append([document[element['pos_ini']: element['pos_fin']],
+                                document[element['pos_fin'] + 1: element['pos_dialog_end']]])
+        for ix, dialog in enumerate(dialogs):
+            dialogs[ix][0] = clean_mr_mrs(clean_parenthesis(dialog[0]))
+            dialogs[ix][1] = clean_mr_mrs(clean_parenthesis(dialog[1])).replace(':', ' ') \
+                .replace('(', ' ').replace(')', ' ') \
+                .replace('  ', ' ')
+        output = []
+        for dialog in dialogs:
+            if dialog[0].find(presidencia) == -1:
+                if dialog[0].find(vicepresidencia) == -1:
+                    output.append(dialog)
+        return output
 
 
 def clean_names(name):
@@ -253,9 +254,27 @@ def cargar_dialogos(dialogs, create_model):
     graph.run(nc.add_labels_palabras())
 
 
-def generate_document(list_docs, params):
-    document = ''
+def clean_document(document):
+    return document.replace(
+        '(aplausos  la señora ministra de hacienda  montero cuadrado:  ahora )', '').replace(
+        '(el señor betoret coll:  cuéntanos el pacto con esquerra  rumores)', '').replace(
+        'la señora presidenta: señorías, por favor, guarden silencio.', '').replace(
+        '(el señor casado blanco: el qué  el qué)', '').replace(
+        '(protestas  el señor de olano vela:  fuisteis vosotros  que tenéis mucha cara )', '').replace(
+        'presidenta: señorías', '').replace(
+        '(el señor sánchez pérez-castejón  candidato a la presidencia del gobierno:  ya  ya  rumores  aplausos)',
+        '').replace('(la señora olano choclán:  qué vergüenza )', '').replace(
+        '(protestas  un señordiputado  venga ya  el señor espinosa de los monteros simón:  a mí me daría vergüenza )',
+        '').replace('casado  ha dicho literalmente:', 'casado  ha dicho literalmente').replace(
+        'de la mesa el partido de la señora arrimadas:', 'de la mesa el partido de la señora arrimadas').replace(
+        '(la señora ministra de hacienda en funciones  montero cuadrado:  hombre   derrotados )', '').replace(
+        'el señora', 'la señora')
+
+
+def generate_documents(list_docs, params):
+    documents = []
     for ind, doc in enumerate(list_docs):
+        document = ''
         print('----------------------- DOCUMENTO ' + str(ind) + ' -----------------------')
         pagina_inicial = params[doc[0]]['pagina_inicial']
         frase_inicial = params[doc[0]]['frase_inicial']
@@ -284,36 +303,16 @@ def generate_document(list_docs, params):
                             document = document.replace(match.group(), match.group()[1:-1])
 
                 document = document + cl_text + ' '
-    return document
+        documents.append([clean_document(document), codigo_documento])
+    return documents
 
 
-def main(create_model):
-    params = {'doc_0.pdf': {'pagina_inicial': 7,
-                            'frase_inicial': '',
-                            'codigo_documento': 'cve: dscd-14-pl-2'},
-              'doc_1.pdf': {'pagina_inicial': 2,
-                            'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
-                            'codigo_documento': 'cve: dscd-14-pl-3'},
-              }
-
+def main(create_model, params):
     list_docs = obtain_documents(params)
 
-    document = generate_document(list_docs, params).replace(
-        '(aplausos  la señora ministra de hacienda  montero cuadrado:  ahora )', '').replace(
-        '(el señor betoret coll:  cuéntanos el pacto con esquerra  rumores)', '').replace(
-        'la señora presidenta: señorías, por favor, guarden silencio.', '').replace(
-        '(el señor casado blanco: el qué  el qué)', '').replace(
-        '(protestas  el señor de olano vela:  fuisteis vosotros  que tenéis mucha cara )', '').replace(
-        'presidenta: señorías', '').replace(
-        '(el señor sánchez pérez-castejón  candidato a la presidencia del gobierno:  ya  ya  rumores  aplausos)',
-        '').replace('(la señora olano choclán:  qué vergüenza )', '').replace(
-        '(protestas  un señordiputado  venga ya  el señor espinosa de los monteros simón:  a mí me daría vergüenza )',
-        '').replace('casado  ha dicho literalmente:', 'casado  ha dicho literalmente').replace(
-        'de la mesa el partido de la señora arrimadas:', 'de la mesa el partido de la señora arrimadas').replace(
-        '(la señora ministra de hacienda en funciones  montero cuadrado:  hombre   derrotados )', '').replace(
-        'el señora', 'la señora')
+    documents = generate_documents(list_docs, params)
 
-    dialogs = generate_dialogs(document)
+    dialogs = generate_dialogs(documents)
 
     dialogs_clean = clean_dialogs(dialogs)
 
@@ -321,6 +320,13 @@ def main(create_model):
 
 
 if __name__ == '__main__':
-    create_model = False
-    main(create_model)
+    create_model = True
+    params = {'doc_0.pdf': {'pagina_inicial': 7,
+                            'frase_inicial': '',
+                            'codigo_documento': 'cve: dscd-14-pl-2'},
+              #              'doc_1.pdf': {'pagina_inicial': 2,
+              #                            'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
+              #                            'codigo_documento': 'cve: dscd-14-pl-3'},
+              }
+    main(create_model, params)
     print('FIN PROCESO')

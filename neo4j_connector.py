@@ -4,7 +4,7 @@ from py2neo import Graph, NodeMatcher, Relationship
 def generate_graph():
     neo4j_user = 'neo4j'
     #    neo4j_pass = 'congreso'
-    neo4j_pass = 'capgemini'
+    neo4j_pass = 'atsistemas'
     return Graph(secure=True, auth=(neo4j_user, neo4j_pass))
 
 

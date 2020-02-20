@@ -211,6 +211,7 @@ def dialog_tagger(dialog, nlp, pos_tagger, create_model):
 
     return output
 
+
 def cargar_dialogos(dialogs, create_model):
     graph = nc.generate_graph()
     matcher = nc.generate_nodeMatcher(graph)
@@ -315,7 +316,6 @@ def main(create_model, params):
 
     dialogs = generate_dialogs(documents)
 
-#AQUI ????????
     dialogs_clean = []
     for dialog, doc in dialogs:
         for cl_dialog in clean_dialogs(dialog):
@@ -325,13 +325,13 @@ def main(create_model, params):
 
 
 if __name__ == '__main__':
-    create_model = True
-    params = {'doc_0.pdf': {'pagina_inicial': 7,
-                            'frase_inicial': '',
-                            'codigo_documento': 'cve: dscd-14-pl-2'},
-              #              'doc_1.pdf': {'pagina_inicial': 2,
-              #                            'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
-              #                            'codigo_documento': 'cve: dscd-14-pl-3'},
+    create_model = False
+    params = {'DSCD-14-PL-2.PDF': {'pagina_inicial': 7,
+                                   'frase_inicial': '',
+                                   'codigo_documento': 'cve: DSCD-14-PL-2'.lower()},
+              'DSCD-14-PL-3.PDF': {'pagina_inicial': 2,
+                                   'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
+                                   'codigo_documento': 'cve: dscd-14-pl-3'},
               }
     main(create_model, params)
     print('FIN PROCESO')

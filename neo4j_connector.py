@@ -35,6 +35,7 @@ def palabras_dichas():
     query = query + 'SET pala.veces = veces '
     return query
 
+
 def add_labels_diputados():
     # Para Cytoscape
     return '''
@@ -43,6 +44,7 @@ def add_labels_diputados():
     d.veces = 50
     RETURN d
     '''
+
 
 def add_labels_palabras():
     # Para Cytoscape
@@ -74,8 +76,10 @@ def return_diputado(matcher, apellidos):
 def return_palabra(matcher, palabra):
     return matcher.match("Palabra", palabra=palabra).first()
 
+
 def return_lista_palabras():
     return 'MATCH (p:Palabra) RETURN p'
+
 
 def return_grupos_palabras(palabra):
     query = 'MATCH(d: Diputado)-[r: DICE]->(p:Palabra) '
@@ -85,19 +89,22 @@ def return_grupos_palabras(palabra):
 
 
 def insert_relation(diputado, palabra, num_pleno):
-    query ='MATCH(d: Diputado {apellidos: "' + diputado + '"}) '
-    query = query + 'MERGE (p:Palabra {palabra: "' + palabra + '"}) '
-    query = query + 'MERGE (d) -[r:DICE]->(p) '
-    query = query + 'ON CREATE SET r.veces = 1, r.grupo = d.grupo , r.pleno = "' + num_pleno + '"'
-#    query = query + 'ON MATCH SET r.veces = r.veces + 1'
+    #    query ='MATCH(d: Diputado {apellidos: "' + diputado + '"}) '
+    #    query = query + 'MERGE (p:Palabra {palabra: "' + palabra + '"}) '
+    #    query = query + 'MERGE (d) -[r:DICE {grupo: d.grupo , pleno: "' + num_pleno + '"}]->(p) '
+    #    query = query + 'ON CREATE SET r.grupo = d.grupo , r.pleno = "' + num_pleno + '"'
+    #    query = query + 'ON MATCH SET r.veces = r.veces + 1'
+    #    query = 'MATCH(d: Diputado {apellidos: "' + diputado + '"}), '
+    #    query = query + '(p: Palabra {palabra: "' + palabra + '"}) '
+    #    query = query + 'CREATE (d)-[r: DICE {pleno: "' + num_pleno + '", grupo: d.grupo}]->(p) '
+    #    query = query + 'RETURN r'
+    query = 'MATCH (d), (p) '
+    query = query + 'WHERE d.apellidos = "' + diputado + '" '
+    query = query + 'AND p.palabra = "' + palabra + '" '
+    query = query + 'WITH d as dip, p as pal '
+    query = query + 'MERGE(dip) - [r: DICE{pleno: "' +  num_pleno + '"}]->(pal) '
+    query = query + 'ON CREATE SET r.grupo = dip.grupo , r.veces = 1 '
+    query = query + 'ON MATCH SET r.veces = r.veces + 1'
     return query
-
-def return_graph():
-    return '''MATCH (d:Diputado)-[r]->(p:Palabra) 
-    WHERE p.veces > 2 
-    RETURN d as diputado, p as palabra 
-    LIMIT 25
-    '''
-
 
 

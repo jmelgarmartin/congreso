@@ -11,7 +11,7 @@ import neo4j_connector as nc
 
 # variables generales para la configuracion del proceso
 presidencia = 'presidenta'
-vicepresidencia = 'vicepresidete'
+vicepresidencia = 'vicepresidente'
 pagina_inicial = 0
 frase_inicial = ''
 codigo_documento = ''
@@ -154,7 +154,10 @@ def clean_names(name):
         .replace('ministro de agricultura pesca y alimentación en funciones', 'planas puchades') \
         .replace('ministro de fomento en funciones', 'ábalos meco') \
         .replace('ministra de economía y empresa en funciones', 'calviño santamaría') \
-        .replace(' candidato a la presidencia del gobierno', '')
+        .replace(' candidato a la presidencia del gobierno', '') \
+        .replace('ministro de inclusión  seguridad social y migraciones', 'escrivá belmonte') \
+        .replace('ministra de política territorial y función pública', 'darias san sebastián') \
+        .replace('ministra de hacienda', 'montero cuadrado')
 
 
 def clean_dialogs(dialogs):
@@ -243,14 +246,12 @@ def cargar_dialogos(dialogs, create_model):
                 lemma = nlp(word)[0].lemma_
                 if lemma in list_words_tagged:
                     graph.run(nc.insert_palabra(word))
-                    #                    palabra = nc.return_palabra(matcher, lemma)
                     graph.run(nc.insert_relation(diputado['apellidos'], word, dialog[2]))
-                # else:
-                #      print("PALABRA NO ENCONTRADA: ")
-                #      print(word)
-                #      print(nlp(word)[0].lemma_)
+
         num_dialog = num_dialog - 1
         print("DIALOGOS RESTANTES: " + str(num_dialog))
+
+
     graph.run(nc.palabras_dichas())
     graph.run(nc.add_labels_diputados())
     graph.run(nc.add_labels_palabras())
@@ -270,7 +271,7 @@ def clean_document(document):
         '').replace('casado  ha dicho literalmente:', 'casado  ha dicho literalmente').replace(
         'de la mesa el partido de la señora arrimadas:', 'de la mesa el partido de la señora arrimadas').replace(
         '(la señora ministra de hacienda en funciones  montero cuadrado:  hombre   derrotados )', '').replace(
-        'el señora', 'la señora')
+        'el señora', 'la señora').replace('siguiente:', 'siguiente')
 
 
 def generate_documents(list_docs, params):
@@ -326,12 +327,23 @@ def main(create_model, params):
 
 if __name__ == '__main__':
     create_model = False
-    params = {'DSCD-14-PL-2.PDF': {'pagina_inicial': 7,
-                                   'frase_inicial': '',
-                                   'codigo_documento': 'cve: DSCD-14-PL-2'.lower()},
-              'DSCD-14-PL-3.PDF': {'pagina_inicial': 2,
-                                   'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
-                                   'codigo_documento': 'cve: dscd-14-pl-3'},
-              }
+    params = {
+        #        'DSCD-14-PL-2.PDF': {'pagina_inicial': 7,
+        #                             'frase_inicial': '',
+        #                             'codigo_documento': 'cve: DSCD-14-PL-2'.lower()},
+        #        'DSCD-14-PL-3.PDF': {'pagina_inicial': 2,
+        #                             'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
+        #                             'codigo_documento': 'cve: DSCD-14-PL-3'.lower()},
+        #        'DSCD-14-PL-4.PDF': {'pagina_inicial': 2,
+        #                             'frase_inicial': 'y de algunos del Grupo Parlamentario Plural).',
+        #                             'codigo_documento': 'cve: DSCD-14-PL-4'.lower()},
+        #        # el 5 no existe, va por semanas, creo
+        'DSCD-14-PL-6.PDF': {'pagina_inicial': 6,
+                             'frase_inicial': 'SISTEMA DE SEGURIDAD SOCIAL. (Número de expediente 130/000002).',
+                             'codigo_documento': 'cve: DSCD-14-PL-6'.lower()},
+        #        'DSCD-14-PL-7.PDF': {'pagina_inicial': 7,
+        #                             'frase_inicial': 'Número de expediente 155/000003).',
+        #                             'codigo_documento': 'cve: DSCD-14-PL-7'.lower()},
+    }
     main(create_model, params)
     print('FIN PROCESO')

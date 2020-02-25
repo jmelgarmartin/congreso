@@ -119,6 +119,7 @@ def clean_parenthesis(text):
 def clean_mr_mrs(text):
     return text.replace('el señor ', '').replace('la señora ', '').replace('señor ', '').replace('señora ', '')
 
+
 def clean_separators(document):
     regex = r"[a-z]+:"
     matches = re.finditer(regex, document)
@@ -129,6 +130,7 @@ def clean_separators(document):
             reemplazo = palabra[:-1]
             output = output.replace(palabra, reemplazo)
     return output
+
 
 def generate_dialogs(documents):
     outputs = []
@@ -278,8 +280,7 @@ def cargar_dialogos(dialogs, create_model):
 
 
 def clean_document(document):
-    #esto es para corregir cosas anómalas añadimos, poder eliminar con regex todas las palabras en minúsculas que acaben con :
-
+    # esto es para corregir cosas anómalas añadimos, poder eliminar con regex todas las palabras en minúsculas que acaben con :
 
     return document.replace(
         '(aplausos  la señora ministra de hacienda  montero cuadrado:  ahora )', '').replace(
@@ -351,31 +352,34 @@ def main(create_model, params):
 if __name__ == '__main__':
     create_model = False
     params = {
-#        'DSCD-14-PL-2.PDF': {'pagina_inicial': 7,
-#                             'frase_inicial': '',
-#                             'codigo_documento': 'cve: DSCD-14-PL-2'.lower()},
-#        'DSCD-14-PL-3.PDF': {'pagina_inicial': 2,
-#                             'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
-#                             'codigo_documento': 'cve: DSCD-14-PL-3'.lower()},
-#        'DSCD-14-PL-4.PDF': {'pagina_inicial': 2,
-#                             'frase_inicial': 'y de algunos del Grupo Parlamentario Plural).',
-#                             'codigo_documento': 'cve: DSCD-14-PL-4'.lower()},
-#               # el 5 no existe, va por semanas, creo
-#        'DSCD-14-PL-6.PDF': {'pagina_inicial': 6,
-#                             'frase_inicial': 'SISTEMA DE SEGURIDAD SOCIAL. (Número de expediente 130/000002).',
-#                             'codigo_documento': 'cve: DSCD-14-PL-6'.lower()},
-#        'DSCD-14-PL-7.PDF': {'pagina_inicial': 7,
-#                             'frase_inicial': 'Número de expediente 155/000003).',
-#                             'codigo_documento': 'cve: DSCD-14-PL-7'.lower()},
-        'DSCD-14-PL-8.PDF': {'pagina_inicial': 5,
-                             'frase_inicial': '',
-                             'codigo_documento': 'cve: DSCD-14-PL-8'.lower()},
-#        'DSCD-14-PL-9.PDF': {'pagina_inicial': 6,
-#                             'frase_inicial': 'presentación de esta iniciativa tiene la palabra el señor Rojas García.',
-#                             'codigo_documento': 'cve: DSCD-14-PL-9'.lower()},
-#        'DSCD-14-PL-10.PDF': {'pagina_inicial': 5,
-#                              'frase_inicial': '(Número de expediente 180/000025).',
-#                              'codigo_documento': 'cve: DSCD-14-PL-10'.lower()},
+        #        'DSCD-14-PL-2.PDF': {'pagina_inicial': 7,
+        #                             'frase_inicial': '',
+        #                             'codigo_documento': 'cve: DSCD-14-PL-2'.lower()},
+        #        'DSCD-14-PL-3.PDF': {'pagina_inicial': 2,
+        #                             'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
+        #                             'codigo_documento': 'cve: DSCD-14-PL-3'.lower()},
+        #        'DSCD-14-PL-4.PDF': {'pagina_inicial': 2,
+        #                             'frase_inicial': 'y de algunos del Grupo Parlamentario Plural).',
+        #                             'codigo_documento': 'cve: DSCD-14-PL-4'.lower()},
+        #               # el 5 no existe, va por semanas, creo
+        #        'DSCD-14-PL-6.PDF': {'pagina_inicial': 6,
+        #                             'frase_inicial': 'SISTEMA DE SEGURIDAD SOCIAL. (Número de expediente 130/000002).',
+        #                             'codigo_documento': 'cve: DSCD-14-PL-6'.lower()},
+        #        'DSCD-14-PL-7.PDF': {'pagina_inicial': 7,
+        #                             'frase_inicial': 'Número de expediente 155/000003).',
+        #                             'codigo_documento': 'cve: DSCD-14-PL-7'.lower()},
+        #'DSCD-14-PL-8.PDF': {'pagina_inicial': 5,
+        #                     'frase_inicial': '',
+        #                     'codigo_documento': 'cve: DSCD-14-PL-8'.lower()},
+                'DSCD-14-PL-9.PDF': {'pagina_inicial': 6,
+                                     'frase_inicial': 'presentación de esta iniciativa tiene la palabra el señor Rojas García.',
+                                     'codigo_documento': 'cve: DSCD-14-PL-9'.lower()},
+        #        'DSCD-14-PL-10.PDF': {'pagina_inicial': 5,
+        #                              'frase_inicial': '(Número de expediente 180/000025).',
+        #                              'codigo_documento': 'cve: DSCD-14-PL-10'.lower()},
+        #        'DSCD-14-PL-11.PDF': {'pagina_inicial': 2,
+        #                              'frase_inicial': 'expediente 130/000004).',
+        #                              'codigo_documento': 'cve: DSCD-14-PL-11'.lower()},
     }
     main(create_model, params)
     print('FIN PROCESO')

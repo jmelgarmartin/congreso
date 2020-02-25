@@ -119,6 +119,16 @@ def clean_parenthesis(text):
 def clean_mr_mrs(text):
     return text.replace('el señor ', '').replace('la señora ', '').replace('señor ', '').replace('señora ', '')
 
+def clean_separators(document):
+    regex = r"[a-z]+:"
+    matches = re.finditer(regex, document)
+    output = document
+    for matchNum, match in enumerate(matches, start=1):
+        palabra = match.group()
+        if palabra != 'cve:':
+            reemplazo = palabra[:-1]
+            output = output.replace(palabra, reemplazo)
+    return output
 
 def generate_dialogs(documents):
     outputs = []
@@ -157,7 +167,15 @@ def clean_names(name):
         .replace(' candidato a la presidencia del gobierno', '') \
         .replace('ministro de inclusión  seguridad social y migraciones', 'escrivá belmonte') \
         .replace('ministra de política territorial y función pública', 'darias san sebastián') \
-        .replace('ministra de hacienda', 'montero cuadrado')
+        .replace('ministra de hacienda', 'montero cuadrado') \
+        .replace('representante de la asamblea regional de murcia', 'conesa alcaraz') \
+        .replace('de olano vela', 'olano vela') \
+        .replace('ministro del interior', 'grande-marlaska gómez') \
+        .replace('ministro de interior', 'grande-marlaska gómez') \
+        .replace('ministro de agricultura pesca y alimentación', 'planas puchades') \
+        .replace('ministro de transportes movilidad y agenda urbana', 'ábalos meco') \
+        .replace('presidente del gobierno', 'sánchez pérez-castejón') \
+        .replace('ministro de sanidad', 'illa roca')
 
 
 def clean_dialogs(dialogs):
@@ -243,14 +261,16 @@ def cargar_dialogos(dialogs, create_model):
             print(dialog[1])
         else:
             for word in dialog[1].split(' '):
-                lemma = nlp(word)[0].lemma_
-                if lemma in list_words_tagged:
-                    graph.run(nc.insert_palabra(word))
-                    graph.run(nc.insert_relation(diputado['apellidos'], word, dialog[2]))
+                try:
+                    lemma = nlp(word)[0].lemma_
+                    if lemma in list_words_tagged:
+                        graph.run(nc.insert_palabra(word))
+                        graph.run(nc.insert_relation(diputado['apellidos'], word, dialog[2]))
+                except:
+                    pass
 
         num_dialog = num_dialog - 1
         print("DIALOGOS RESTANTES: " + str(num_dialog))
-
 
     graph.run(nc.palabras_dichas())
     graph.run(nc.add_labels_diputados())
@@ -258,6 +278,9 @@ def cargar_dialogos(dialogs, create_model):
 
 
 def clean_document(document):
+    #esto es para corregir cosas anómalas añadimos, poder eliminar con regex todas las palabras en minúsculas que acaben con :
+
+
     return document.replace(
         '(aplausos  la señora ministra de hacienda  montero cuadrado:  ahora )', '').replace(
         '(el señor betoret coll:  cuéntanos el pacto con esquerra  rumores)', '').replace(
@@ -271,7 +294,7 @@ def clean_document(document):
         '').replace('casado  ha dicho literalmente:', 'casado  ha dicho literalmente').replace(
         'de la mesa el partido de la señora arrimadas:', 'de la mesa el partido de la señora arrimadas').replace(
         '(la señora ministra de hacienda en funciones  montero cuadrado:  hombre   derrotados )', '').replace(
-        'el señora', 'la señora').replace('siguiente:', 'siguiente')
+        'el señora', 'la señora').replace('  ', ' ')
 
 
 def generate_documents(list_docs, params):
@@ -289,7 +312,7 @@ def generate_documents(list_docs, params):
         for page in doc[1].pages:
             ix = ix + 1
             if ix >= pagina_inicial:
-                text = page.extractText().lower().replace('\n', '')
+                text = clean_separators(page.extractText().replace('\n', '')).lower()
                 ini = remove_headers(text)
                 if sw_primera_vez:
                     ini = ini + text[ini:].find(frase_inicial) + len(frase_inicial)
@@ -328,22 +351,31 @@ def main(create_model, params):
 if __name__ == '__main__':
     create_model = False
     params = {
-        #        'DSCD-14-PL-2.PDF': {'pagina_inicial': 7,
-        #                             'frase_inicial': '',
-        #                             'codigo_documento': 'cve: DSCD-14-PL-2'.lower()},
-        #        'DSCD-14-PL-3.PDF': {'pagina_inicial': 2,
-        #                             'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
-        #                             'codigo_documento': 'cve: DSCD-14-PL-3'.lower()},
-        #        'DSCD-14-PL-4.PDF': {'pagina_inicial': 2,
-        #                             'frase_inicial': 'y de algunos del Grupo Parlamentario Plural).',
-        #                             'codigo_documento': 'cve: DSCD-14-PL-4'.lower()},
-        #        # el 5 no existe, va por semanas, creo
-        'DSCD-14-PL-6.PDF': {'pagina_inicial': 6,
-                             'frase_inicial': 'SISTEMA DE SEGURIDAD SOCIAL. (Número de expediente 130/000002).',
-                             'codigo_documento': 'cve: DSCD-14-PL-6'.lower()},
-        #        'DSCD-14-PL-7.PDF': {'pagina_inicial': 7,
-        #                             'frase_inicial': 'Número de expediente 155/000003).',
-        #                             'codigo_documento': 'cve: DSCD-14-PL-7'.lower()},
+#        'DSCD-14-PL-2.PDF': {'pagina_inicial': 7,
+#                             'frase_inicial': '',
+#                             'codigo_documento': 'cve: DSCD-14-PL-2'.lower()},
+#        'DSCD-14-PL-3.PDF': {'pagina_inicial': 2,
+#                             'frase_inicial': 'Se reanuda la sesión a las nueve de la mañana.',
+#                             'codigo_documento': 'cve: DSCD-14-PL-3'.lower()},
+#        'DSCD-14-PL-4.PDF': {'pagina_inicial': 2,
+#                             'frase_inicial': 'y de algunos del Grupo Parlamentario Plural).',
+#                             'codigo_documento': 'cve: DSCD-14-PL-4'.lower()},
+#               # el 5 no existe, va por semanas, creo
+#        'DSCD-14-PL-6.PDF': {'pagina_inicial': 6,
+#                             'frase_inicial': 'SISTEMA DE SEGURIDAD SOCIAL. (Número de expediente 130/000002).',
+#                             'codigo_documento': 'cve: DSCD-14-PL-6'.lower()},
+#        'DSCD-14-PL-7.PDF': {'pagina_inicial': 7,
+#                             'frase_inicial': 'Número de expediente 155/000003).',
+#                             'codigo_documento': 'cve: DSCD-14-PL-7'.lower()},
+        'DSCD-14-PL-8.PDF': {'pagina_inicial': 5,
+                             'frase_inicial': '',
+                             'codigo_documento': 'cve: DSCD-14-PL-8'.lower()},
+#        'DSCD-14-PL-9.PDF': {'pagina_inicial': 6,
+#                             'frase_inicial': 'presentación de esta iniciativa tiene la palabra el señor Rojas García.',
+#                             'codigo_documento': 'cve: DSCD-14-PL-9'.lower()},
+#        'DSCD-14-PL-10.PDF': {'pagina_inicial': 5,
+#                              'frase_inicial': '(Número de expediente 180/000025).',
+#                              'codigo_documento': 'cve: DSCD-14-PL-10'.lower()},
     }
     main(create_model, params)
     print('FIN PROCESO')
